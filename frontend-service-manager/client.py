@@ -7,9 +7,8 @@ class Connection():
         self.reader: asyncio.StreamReader = None
         self.writer: asyncio.StreamWriter = None
 
-    async def connect(self):
+    async def connect(self) -> None:
         self.reader, self.writer = await asyncio.open_connection(self._address, self._port)
-        asyncio.run(self.connection)
 
     async def send(self, data):
         self.connection.writer.write(data)
