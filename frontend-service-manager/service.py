@@ -1,38 +1,35 @@
 import asyncio
 import time
 
-import zmq
-from zmq.asyncio import Context
+from client import Connection
 
-context = Context.instance()
-
-async def ping() -> None:
-    """print dots to indicate idleness"""
+async def heartbeat(socket: Connection) -> None:
+    await asyncio.sleep(1.6)
+    # send heartbeat to server
     while True:
-        await asyncio.sleep(0.5)
-        # logging.info(".")
+        await socket.send(b"ping")
+        await asyncio.sleep(2)
 
 
-async def contact() -> None:
-    socket = context.socket(zmq.CLIENT)
-    
-    socket.connect("tcp://localhost:5556")
-
+async def handler(socket: Connection) -> None:
+    await asyncio.sleep(2)
     while True:
-        socket.send(b'1234')
-        response = await socket.recv()
-        print(f"from server: {response}")
-        response = socket.recv()
-        print(f"from server: {response}")
-        time.sleep(1)
+        data = await socket.recv()
+        if data == b"pong":
+            socket.last_heartbeat = time.time()
+        else:
+            print(data)
     
 
 if __name__ == "__main__":
+    socket = Connection()
     asyncio.run(
         asyncio.wait(
             [
-                ping(),
-                contact()                
+                socket.connect(),
+                heartbeat(socket),
+                handler(socket),
+
             ]
         )
     )
