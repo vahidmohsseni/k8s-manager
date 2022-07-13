@@ -18,11 +18,13 @@ class Connection:
 
 class Server:
     def __init__(self) -> None:
+        self._address = "0.0.0.0"
+        self._port = 5556
         self.connections = []
 
     async def run(self) -> None:
         # TODO: read the address from args 
-        socket = await asyncio.start_server(self.handle_connection, "0.0.0.0", 5556)
+        socket = await asyncio.start_server(self.handle_connection, self._address, self._port)
         async with socket: 
             await socket.serve_forever()
 

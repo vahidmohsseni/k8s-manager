@@ -4,6 +4,8 @@ import time
 import zmq
 from zmq.asyncio import Context
 
+from server import Server
+
 import logging
 
 
@@ -54,7 +56,7 @@ async def api_call() -> None:
 
 
 async def node_controller() -> None:
-    
+    pass
 
 
 if __name__ == "__main__":
