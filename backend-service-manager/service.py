@@ -61,11 +61,15 @@ async def node_controller() -> None:
 
 if __name__ == "__main__":
     logging.info("Strating the service")
+    server = Server()
+
     asyncio.run(
         asyncio.wait(
             [
                 ping(),
                 api_call(),
+                server.run(),
+                server.control(),
                 node_controller()
             ]
         )
