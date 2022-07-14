@@ -1,6 +1,10 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
+from werkzeug.utils import secure_filename
+import os
 import zmq
 import json
+
+ALLOWED_EXTENSIONS = set(['py', ])
 
 bp = Blueprint("v1", __name__, url_prefix="/api/v1")
 
@@ -9,6 +13,11 @@ _request:zmq.Socket = __context.socket(zmq.REQ)
 _request.connect("tcp://localhost:5555")
 
 REQUEST = {"cmd": None, "args": None}
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @bp.route("/version", methods=["GET"])
@@ -32,22 +41,61 @@ def get_tasks():
 @bp.route("/tasks/<string:task_name>", methods=["POST"])
 def create_task(task_name: str):
     """
-    ARGS FORMAT: [name, file_address]
+    1. check if the task_name does not exist
+    2. create the task folder
+    3. TODO: send the task to backend service to be scheduled
     """
-    cmd = REQUEST.copy()
-    cmd["cmd"] = "CREATE-TASK"
-    cmd["args"] = [task_name]
-    _request.send()
-    return jsonify({"task": task_name}), 201
+    # TODO: add example when returning error
+    if "file" not in request.files:
+        return jsonify({"status": "file required in the request"}), 400
+
+    if "cmd" not in request.form:
+        return jsonify({"status": "command to run is not specified"}), 400
+    
+    if "rt" not in request.form:
+        return jsonify({"status": "return type is not specified"}), 400
+
+    file = request.files["file"]
+    if file.filename == '':
+        return jsonify({"status": "no file"}), 400
+    
+    if task_name in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
+        return jsonify({"status": "task already exists"}), 400
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        os.makedirs(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name))
+        file.save(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name, filename))
+        cmd = REQUEST.copy()
+        cmd["cmd"] = "CREATE-TASK"
+        cmd["args"] = [task_name, ]
+        _request.send()
+        return jsonify({"status": f"task: {task_name} created successfuly."}), 201
+    
+    return jsonify({"status": "Error!"}), 400
 
 
 @bp.route("/tasks/<string:task_name>", methods=["DELETE"])
 def delete_task(task_name: str):
-    # TODO:
     # 1. check the task exists
     # 2. shutdown the task if it is running
     # 3. delete the task
-    return jsonify({"task": task_name}), 200
+    # 4. delete the task folder
+    if task_name not in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
+        return jsonify({"status": "task does not exist"}), 404
+    
+    # TODO: shutdown the task if it is on the backend service
+
+    os.remove(
+        os.path.join(current_app.config["UPLOAD_DIRECTORY"],
+                     task_name,
+                     os.listdir(os.path.join(current_app.config["UPLOAD_DIRECTORY"], 
+                                task_name)
+                               )[0]
+                    )
+            )
+    os.rmdir(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name))
+    return jsonify({"status": f"task: {task_name} deleted successfuly."}), 200
 
 
 @bp.route("/tasks/<string:task_name>", methods=["PUT"])

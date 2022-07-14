@@ -4,6 +4,7 @@ import asyncio
 
 
 class Connection:
+
     def __init__(self, reader, writer, name) -> None:
         self.reader: asyncio.StreamReader = reader
         self.writer: asyncio.StreamWriter = writer
@@ -89,6 +90,7 @@ class Connection:
 
         return header, payload_length, payload_type, payload
 
+
     async def send(self, header, payload = None):
         # TODO: missing mechanism for data larger than 1024 bytes
         data = self.serialize(header, payload)
@@ -104,6 +106,7 @@ class Connection:
     async def _send(self, data):
         self.writer.write(data)
         await self.writer.drain()
+    
     
     async def _recv(self, n=1024):
         return await self.reader.read(n)

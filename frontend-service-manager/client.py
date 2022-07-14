@@ -3,7 +3,8 @@ from email import header
 import json
 
 
-class Connection():
+class Connection:
+
     def __init__(self, address = "localhost", port = 5556) -> None:
         self._address = address
         self._port = port
@@ -13,6 +14,7 @@ class Connection():
 
     async def connect(self) -> None:
         self.reader, self.writer = await asyncio.open_connection(self._address, self._port)
+
 
     @classmethod
     def serialize(cls, header: str, payload):
@@ -92,6 +94,7 @@ class Connection():
     async def _send(self, data):
         self.writer.write(data)
         await self.writer.drain()
+    
     
     async def _recv(self, n=1024):
         return await self.reader.read(n)
