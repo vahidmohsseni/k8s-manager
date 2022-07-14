@@ -2,6 +2,7 @@ import time
 import json
 import asyncio
 
+
 class Connection:
     def __init__(self, reader, writer, name) -> None:
         self.reader: asyncio.StreamReader = reader
@@ -109,6 +110,7 @@ class Connection:
     
 
 class Server:
+    
     def __init__(self) -> None:
         self._address = "0.0.0.0"
         self._port = 5556

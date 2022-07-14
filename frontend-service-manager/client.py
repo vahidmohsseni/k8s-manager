@@ -2,6 +2,7 @@ import asyncio
 from email import header
 import json
 
+
 class Connection():
     def __init__(self, address = "localhost", port = 5556) -> None:
         self._address = address

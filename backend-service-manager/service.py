@@ -1,19 +1,15 @@
 import asyncio
 import time
-
 import zmq
 from zmq.asyncio import Context
-
-from server import Server
-
 import logging
 
+from server import Server
 
 FORMAT = '%(asctime)s %(levelname)s %(message)s'
 logging.basicConfig(#filename="backend-service.log",
                     format=FORMAT,
                     level=logging.DEBUG)
-
 
 context = Context.instance()
 

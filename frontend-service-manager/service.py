@@ -1,9 +1,9 @@
 import asyncio
 import time
-
 import psutil
 
 from client import Connection
+
 
 async def send_status(socket: Connection) -> None:
     # get some information about the system
@@ -16,7 +16,6 @@ async def send_status(socket: Connection) -> None:
         await socket.send("status", {"cpu": cpu_usage, "memory": memory_usage}) 
         await asyncio.sleep(60)
         
-
 
 async def heartbeat(socket: Connection) -> None:
     await asyncio.sleep(1.6)
@@ -49,4 +48,3 @@ if __name__ == "__main__":
             ]
         )
     )
-    
