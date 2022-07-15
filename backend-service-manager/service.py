@@ -56,12 +56,17 @@ async def api_call() -> None:
         
         cmd = req.get("cmd", "DEFAULT")
         args = req.get("args", None)
-        
         reply.send_json(PROCESS_MAPS[cmd](args))
 
 
+async def task_manager() -> None:
+    while True:
+        for task in tasks_list:
+            pass
+
 async def node_controller() -> None:
     pass
+
 
 
 if __name__ == "__main__":

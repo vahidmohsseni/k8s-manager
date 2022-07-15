@@ -51,9 +51,13 @@ def create_task(task_name: str):
 
     if "cmd" not in request.form:
         return jsonify({"status": "command to run is not specified"}), 400
+
+    command = request.form["cmd"]
     
     if "rt" not in request.form:
         return jsonify({"status": "return type is not specified"}), 400
+
+    return_type = request.form["rt"]
 
     file = request.files["file"]
     if file.filename == '':
@@ -68,8 +72,8 @@ def create_task(task_name: str):
         file.save(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name, filename))
         cmd = REQUEST.copy()
         cmd["cmd"] = "CREATE-TASK"
-        cmd["args"] = [task_name, ]
-        _request.send()
+        cmd["args"] = [task_name, command, return_type]
+        _request.send_json(cmd)
         return jsonify({"status": f"task: {task_name} created successfuly."}), 201
     
     return jsonify({"status": "Error!"}), 400

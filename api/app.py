@@ -26,4 +26,4 @@ if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 5001))
     HOST = 'localhost'
         
-    app.run(host=HOST, port=PORT, debug=True)
+    app.run(host=HOST, port=PORT, debug=False)
