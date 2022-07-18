@@ -11,6 +11,7 @@ class Connection:
         self.reader: asyncio.StreamReader = None
         self.writer: asyncio.StreamWriter = None
         self.last_heartbeat: float = None
+        self.reconnect = False
 
     async def connect(self) -> None:
         self.reader, self.writer = await asyncio.open_connection(self._address, self._port)
@@ -25,9 +26,9 @@ class Connection:
         21 to 24 bytes for the payload type -> str, json, file
         25 to end bytes for the payload
         Example:
-            header: "status"
+            header: "info"
             payload: {"cpu": "50%", "memory": "50%"}
-            data = b'status\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1fjson{"cpu": "50%", "memory": "50%"}'
+            data = b'info\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1fjson{"cpu": "50%", "memory": "50%"}'
         """
         # reserve 20 byte for header
         data = header.encode()
@@ -49,6 +50,11 @@ class Connection:
             data += len(payload).to_bytes(5, "big")
             data += "json".encode()
             data += payload
+        elif isinstance(payload, list):
+            payload = json.dumps(payload).encode()
+            data += len(payload).to_bytes(5, "big")
+            data += "list".encode()
+            data += payload
         # TODO: File type should be added here
         # file type is not supported yet
         else:
@@ -58,9 +64,10 @@ class Connection:
     
 
     @classmethod
-    def deserialize(self, data):
+    def deserialize(cls, data):
         """
-        Deserialize the data into a tuple of (header, payload)
+        Deserialize the data into a tuple of:
+            (header, payload_length, payload_type, payload)
         """
         header = data[:16].decode()
         header = header.rstrip("\x00")
@@ -72,6 +79,8 @@ class Connection:
         if payload_type == "str":
             payload = data[25:].decode()
         elif payload_type == "json":
+            payload = json.loads(data[25:].decode())
+        elif payload_type == "list":
             payload = json.loads(data[25:].decode())
         else:
             raise ValueError("payload type is not supported")
@@ -101,7 +110,7 @@ class Connection:
 
 
 if __name__ == "__main__":
-    header = "status"
+    header = "info"
     payload = {"cpu": "50%", "memory": "50%"}
     data = Connection.serialize(header, payload)
     print(data)

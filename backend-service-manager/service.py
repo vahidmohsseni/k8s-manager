@@ -14,22 +14,30 @@ logging.basicConfig(#filename="backend-service.log",
                     format=FORMAT,
                     level=logging.DEBUG)
 
+
+QUEUE_MAX_SIZE = 20
+
 context = Context.instance()
 
 
-tasks_list: List[Task] = []
-
-def get_tasks(*args):
-    return {"status": "ok", "tasks": [task.name for task in tasks_list]}
+def get_tasks(args):
+    return {"status": "ok", "tasks": [task.name for task in server.tasks_list]}
 
 
-def create_task(*args):
+def create_task(args):
     """args order: task_name, task_args, task_return_type"""
-    tasks_list.append(Task(args[0], args[1], args[2]))
+    print("dsandjandjanjdsa", args)
+    try:
+        task = Task(args[0], args[1], args[2])
+        server.tasks_list.append(task)
+    except Exception as e:
+        print(e)
+        return {"status": "error", "message": str(e)}
+    print("task created")
     return {"status": "ok"}
 
 
-def default_response(*args):
+def default_response(args):
     return {"status": "not applicable"}
 
 
@@ -59,11 +67,6 @@ async def api_call() -> None:
         reply.send_json(PROCESS_MAPS[cmd](args))
 
 
-async def task_manager() -> None:
-    while True:
-        for task in tasks_list:
-            pass
-
 async def node_controller() -> None:
     pass
 
@@ -80,6 +83,7 @@ if __name__ == "__main__":
                 api_call(),
                 server.run(),
                 server.control(),
+                server.task_manager(),
                 node_controller()
             ]
         )

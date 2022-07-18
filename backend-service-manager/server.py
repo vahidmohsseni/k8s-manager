@@ -1,6 +1,10 @@
 import time
 import json
 import asyncio
+from typing import List
+
+
+from task import Task
 
 
 class Connection:
@@ -10,7 +14,8 @@ class Connection:
         self.writer: asyncio.StreamWriter = writer
         self.last_heartbeat: float = time.time()
         self.name = name
-        self.status = None
+        self.info = None
+        self.status = "ready" # ready, busy, offline
 
 
     async def handler(self):
@@ -21,9 +26,9 @@ class Connection:
             elif data[0] == "ping":
                 self.last_heartbeat = time.time()
                 await self.send("pong")
-            elif data[0] == "status":
-                self.status = data[3]
-                print(self.name, self.status)
+            elif data[0] == "info":
+                self.info = data[3]
+                print(self.name, self.info)
             else:
                 print(data)
     
@@ -34,12 +39,12 @@ class Connection:
         Serialize the payload into a bytes object
         0 to 15 bytes for the header
         16 to 20 bytes for the payload length
-        21 to 24 bytes for the payload type -> str, json, file
+        21 to 24 bytes for the payload type -> str, json, file, list
         25 to end bytes for the payload
         Example:
-            header: "status"
+            header: "info"
             payload: {"cpu": "50%", "memory": "50%"}
-            data = b'status\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1fjson{"cpu": "50%", "memory": "50%"}'
+            data = b'info\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1fjson{"cpu": "50%", "memory": "50%"}'
         """
         # reserve 20 byte for header
         data = header.encode()
@@ -61,6 +66,11 @@ class Connection:
             data += len(payload).to_bytes(5, "big")
             data += "json".encode()
             data += payload
+        elif isinstance(payload, list):
+            payload = json.dumps(payload).encode()
+            data += len(payload).to_bytes(5, "big")
+            data += "list".encode()
+            data += payload
         # TODO: File type should be added here
         # file type is not supported yet
         else:
@@ -70,9 +80,10 @@ class Connection:
     
 
     @classmethod
-    def deserialize(self, data):
+    def deserialize(cls, data):
         """
-        Deserialize the data into a tuple of (header, payload)
+        Deserialize the data into a tuple of:
+            (header, payload_length, payload_type, payload)
         """
         header = data[:16].decode()
         header = header.rstrip("\x00")
@@ -84,6 +95,8 @@ class Connection:
         if payload_type == "str":
             payload = data[25:].decode()
         elif payload_type == "json":
+            payload = json.loads(data[25:].decode())
+        elif payload_type == "list":
             payload = json.loads(data[25:].decode())
         else:
             raise ValueError("payload type is not supported")
@@ -119,6 +132,7 @@ class Server:
         self._port = 5556
         self.connections = []
         self.counter = 1
+        self.tasks_list: List[Task] = []
 
 
     async def run(self) -> None:
@@ -144,4 +158,46 @@ class Server:
                     connection.writer.close()
                     print(f"connection {connection.name} is closed")
                     self.connections.remove(connection)
+            await asyncio.sleep(1)
+
+
+    def _find_ready_node(self) -> int:
+        """
+        find the first ready node in the list of connections
+        return the index of the node
+        if no node is ready, return -1
+        """
+        for i, connection in enumerate(self.connections):
+            if connection.status == "ready":
+                return i
+        return -1
+        
+    
+    async def schedule_task(self, task: Task):
+        """
+        schedule a task to a node
+        """
+        # find the first ready node
+        index = self._find_ready_node()
+        if index == -1:
+            return 
+        # send the task to the node
+        conn: Connection = self.connections[index]
+        payload = {
+            "task_name": task.name,
+            "args_to_run": task.args_to_run,
+            "return_type": task.return_type,
+        }
+        await conn.send("task", payload)
+        conn.status = "busy"
+        # update task status
+        task.change_status("scheduled")
+        task.set_assigned_node(conn.name)
+
+
+    async def task_manager(self) -> None:
+        while True:
+            for task in self.tasks_list:
+                if task.status == "created":
+                    await self.schedule_task(task)
             await asyncio.sleep(1)
