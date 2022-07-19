@@ -149,3 +149,4 @@ def download_task(task_name: str):
         return jsonify({"status": "task does not exist"}), 404
 
     return send_from_directory(uploads, os.listdir(uploads)[0])
+
