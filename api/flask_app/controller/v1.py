@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 import zmq
@@ -141,3 +141,11 @@ def task_results(task_name: str):
     # 1. check the task exists
     # 2. get the task results
     return jsonify({"task": task_name}), 200
+
+@bp.route("/tasks/<string:task_name>/download", methods=["GET"])
+def download_task(task_name: str):
+    uploads = os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name)
+    if len(os.listdir(uploads)) == 0:
+        return jsonify({"status": "task does not exist"}), 404
+
+    return send_from_directory(uploads, os.listdir(uploads)[0])
