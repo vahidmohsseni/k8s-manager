@@ -22,7 +22,7 @@ def download_task(task_name):
     url = base_address + "/tasks/" + task_name + "/download"
     
     # create a directory to store the task tag it with the timestamp
-    task_dir = os.curdir + "/_tasks/" + task_name + "-" + str(int(time.time()))
+    task_dir = os.curdir + "/.tasks/" + task_name + "-" + str(int(time.time()))
     os.makedirs(task_dir, exist_ok=True)
 
     process = subprocess.run(
@@ -44,6 +44,35 @@ def download_task(task_name):
         return 0
 
     return 1
+
+
+async def run_task(task_name, task_args) -> None:
+    """
+    Run the task
+    """
+    if not download_task(task_name):
+        return
+
+    logging.info("running task")
+    task_dir = [dir
+        for dir in os.listdir(os.getcwd() + "/.tasks/") if (task_name in dir and "venv" != dir)
+        ]
+    task_dir.sort()
+    task_dir = task_dir[-1]
+    print("task dir: ")
+    print(task_dir)
+    python_dir = os.getcwd() + "/.tasks/" + "venv/bin"
+    print("python dir: ", python_dir + "/" + task_args)
+    try:
+        process = subprocess.Popen(
+            [
+                python_dir + "/" + task_args
+            ],
+            cwd=task_dir
+        )
+    except Exception as e:
+        print("error running task: ", e)
+    logging.info("task finished")
 
 
 async def send_info(socket: Connection) -> None:
@@ -78,7 +107,7 @@ async def handler(socket: Connection) -> None:
             socket.last_heartbeat = time.time()
         elif data[0] == "task":
             print(data)
-            download_task(data[3]["task_name"])
+            await run_task(data[3]["task_name"], data[3]["args_to_run"])
         else:
             print(data)
 
@@ -97,7 +126,17 @@ async def reconnect(socket: Connection) -> None:
         time_interval *= 2
 
 
+def create_virtual_environment() -> None:
+    """
+    Run the init.sh to build the virtual environment
+    """
+    logging.info("creating virtual environment")
+    subprocess.run(["bash", "init.sh"])
+    logging.info("virtual environment created!")
+    
+
 if __name__ == "__main__":
+    create_virtual_environment()
     socket = Connection()
     asyncio.run(
         asyncio.wait(
@@ -106,7 +145,6 @@ if __name__ == "__main__":
                 heartbeat(socket),
                 handler(socket),
                 send_info(socket)
-
             ]
         )
     )
