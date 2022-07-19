@@ -2,6 +2,8 @@ import asyncio
 import time
 import psutil
 import logging
+import subprocess
+import os
 
 from client import Connection
 
@@ -10,6 +12,38 @@ FORMAT = '%(asctime)s %(levelname)s %(message)s'
 logging.basicConfig(#filename="backend-service.log",
                     format=FORMAT,
                     level=logging.DEBUG)
+
+
+def download_task(task_name):
+    """
+    Download the task from the server
+    """
+    base_address = "http://localhost:5001/api/v1"
+    url = base_address + "/tasks/" + task_name + "/download"
+    
+    # create a directory to store the task tag it with the timestamp
+    task_dir = os.curdir + "/_tasks/" + task_name + "-" + str(int(time.time()))
+    os.makedirs(task_dir, exist_ok=True)
+
+    process = subprocess.run(
+            [    
+                "curl",
+                url, 
+                "-JO", 
+                "-w \"%{http_code}\""
+            ],
+            capture_output=True,
+            cwd=task_dir
+        )
+    if process.returncode != 0:
+        logging.error(f"error downloading task: {task_name}", process.stderr)
+        return 0
+
+    if "200" not in process.stdout.decode():
+        logging.error(f"task: {task_name} not found, return code:", process.stdout)
+        return 0
+
+    return 1
 
 
 async def send_info(socket: Connection) -> None:
@@ -44,6 +78,7 @@ async def handler(socket: Connection) -> None:
             socket.last_heartbeat = time.time()
         elif data[0] == "task":
             print(data)
+            download_task(data[3]["task_name"])
         else:
             print(data)
 
