@@ -46,33 +46,32 @@ def download_task(task_name):
     return 1
 
 
-async def run_task(task_name, task_args) -> None:
+async def run_task(task_name, task_args, return_type) -> None:
     """
     Run the task
     """
     if not download_task(task_name):
         return
 
-    logging.info("running task")
+    logging.info(f"running task: {task_name}")
     task_dir = [dir
         for dir in os.listdir(os.getcwd() + "/.tasks/") if (task_name in dir and "venv" != dir)
         ]
     task_dir.sort()
-    task_dir = task_dir[-1]
-    print("task dir: ")
-    print(task_dir)
+    task_dir = os.getcwd() + "/.tasks/" + task_dir[-1]
     python_dir = os.getcwd() + "/.tasks/" + "venv/bin"
-    print("python dir: ", python_dir + "/" + task_args)
+    task_args = task_args.split(" ")
     try:
         process = subprocess.Popen(
             [
-                python_dir + "/" + task_args
-            ],
-            cwd=task_dir
+                python_dir + "/python",
+            ] + task_args,
+            cwd = task_dir
         )
+        process.wait()
     except Exception as e:
-        print("error running task: ", e)
-    logging.info("task finished")
+        logging.error(f"error running task: {task_name}", e)
+    logging.info(f"task: {task_name} finished")
 
 
 async def send_info(socket: Connection) -> None:
@@ -107,7 +106,7 @@ async def handler(socket: Connection) -> None:
             socket.last_heartbeat = time.time()
         elif data[0] == "task":
             print(data)
-            await run_task(data[3]["task_name"], data[3]["args_to_run"])
+            await run_task(data[3]["task_name"], data[3]["args_to_run"], data[3]["return_type"])
         else:
             print(data)
 
