@@ -106,8 +106,8 @@ def delete_task(task_name: str):
     os.rmdir(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name))
     return jsonify(
         {
-            "status": f"task: {task_name} deleted successfuly.", 
-            "backend-status": reply["status"]
+            "status": f"task: {task_name} deleted successfuly from API host.", 
+            "backend-status": reply
         }), 200
 
 
@@ -132,7 +132,6 @@ def start_task(task_name: str):
     cmd["args"] = [task_name]
     _request.send_json(cmd)
     reply = _request.recv_json()
-    
     return jsonify(reply), 200
 
 
