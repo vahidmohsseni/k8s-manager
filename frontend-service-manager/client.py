@@ -16,7 +16,6 @@ class Connection:
     async def connect(self) -> None:
         self.reader, self.writer = await asyncio.open_connection(self._address, self._port)
 
-
     @classmethod
     def serialize(cls, header: str, payload):
         """
@@ -62,7 +61,6 @@ class Connection:
             
         return data
     
-
     @classmethod
     def deserialize(cls, data):
         """
@@ -87,23 +85,19 @@ class Connection:
 
         return header, payload_length, payload_type, payload
 
-
     async def send(self, header, payload = None):
         # TODO: missing mechanism for data larger than 1024 bytes
         data = self.serialize(header, payload)
         await self._send(data)
     
-
     async def recv(self):
         data = await self._recv()
         header, payload_length, payload_type, payload = self.deserialize(data)
         return header, payload_length, payload_type, payload
 
-
     async def _send(self, data):
         self.writer.write(data)
         await self.writer.drain()
-    
     
     async def _recv(self, n=1024):
         return await self.reader.read(n)
