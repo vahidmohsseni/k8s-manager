@@ -1,0 +1,148 @@
+import asyncio
+import time
+import logging
+import json
+
+
+from task import Task
+
+
+class Connection:
+
+    def __init__(self, reader, writer, name) -> None:
+        self.reader: asyncio.StreamReader = reader
+        self.writer: asyncio.StreamWriter = writer
+        self.last_heartbeat: float = time.time()
+        self.name = name
+        self.info = None
+        self.status = "ready" # ready, busy, offline
+        self.task: Task = None
+    
+    async def set_task(self, task: Task):
+        self.task = task
+        payload = {
+            "task_name": task.name,
+            "args_to_run": task.args_to_run,
+            "return_type": task.return_type,
+        }
+        await self.send("task", payload)
+        self.status = "busy"
+        # update task status
+        self.task.change_status("scheduled")
+        self.task.set_assigned_node(self.name)
+
+    async def handler(self):
+        while True:
+            data = await self.recv()
+            if data[0] == "":
+                break
+            elif data[0] == "ping":
+                self.last_heartbeat = time.time()
+                await self.send("pong")
+            elif data[0] == "info":
+                self.info = data[3]
+                logging.debug(f"{self.name} received info: {self.info}")
+            elif data[0] == "task-running":
+                print(self.name, "task running", data[3])
+                self.task.change_status("running")
+            elif data[0] == "task-finished":
+                print(self.name, "task finished", data[3])
+                self.task.change_status("finished")
+                self.status = "ready"
+                self.task.return_value = data[3]["return_value"]
+                self.task = None
+            elif data[0] == "task-failed":
+                print(self.name, "task failed", data[3])
+                self.task.change_status("failed")
+                self.status = "ready"
+                self.task.return_value = data[3]["return_value"]
+                self.task = None
+            else:
+                print(data)
+    
+    @classmethod
+    def serialize(cls, header: str, payload):
+        """
+        Serialize the payload into a bytes object
+        0 to 15 bytes for the header
+        16 to 20 bytes for the payload length
+        21 to 24 bytes for the payload type -> str, json, file, list
+        25 to end bytes for the payload
+        Example:
+            header: "info"
+            payload: {"cpu": "50%", "memory": "50%"}
+            data = b'info\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1fjson{"cpu": "50%", "memory": "50%"}'
+        """
+        # reserve 20 byte for header
+        data = header.encode()
+        if len(data) > 16:
+            raise ValueError("header is too long")
+        data += b"\0" * (16 - len(data))
+        # check if payload is None
+        if payload is None:
+            return data
+        # reserve 4 byte for payload type
+        if isinstance(payload, str):
+            # reserve 4 byte for payload length
+            payload = payload.encode()
+            data += len(payload).to_bytes(5, "big")
+            data += "str".encode() + "\0".encode()
+            data += payload
+        elif isinstance(payload, dict):
+            payload = json.dumps(payload).encode()
+            data += len(payload).to_bytes(5, "big")
+            data += "json".encode()
+            data += payload
+        elif isinstance(payload, list):
+            payload = json.dumps(payload).encode()
+            data += len(payload).to_bytes(5, "big")
+            data += "list".encode()
+            data += payload
+        # TODO: File type should be added here
+        # file type is not supported yet
+        else:
+            raise ValueError("payload type is not supported")
+            
+        return data
+    
+    @classmethod
+    def deserialize(cls, data):
+        """
+        Deserialize the data into a tuple of:
+            (header, payload_length, payload_type, payload)
+        """
+        header = data[:16].decode()
+        header = header.rstrip("\x00")
+        payload_length = int.from_bytes(data[16:21], "big")
+        # check if payload size is zero
+        if payload_length == 0:
+            return header, None, None, None
+        payload_type = data[21:25].decode().rstrip("\x00")
+        if payload_type == "str":
+            payload = data[25:].decode()
+        elif payload_type == "json":
+            payload = json.loads(data[25:].decode())
+        elif payload_type == "list":
+            payload = json.loads(data[25:].decode())
+        else:
+            raise ValueError("payload type is not supported")
+
+        return header, payload_length, payload_type, payload
+
+    async def send(self, header, payload = None):
+        # TODO: missing mechanism for data larger than 1024 bytes
+        data = self.serialize(header, payload)
+        await self._send(data)
+
+    async def recv(self):
+        data = await self._recv()
+        header, payload_length, payload_type, payload = self.deserialize(data)
+        return header, payload_length, payload_type, payload
+
+    async def _send(self, data):
+        self.writer.write(data)
+        await self.writer.drain()
+    
+    async def _recv(self, n=1024):
+        return await self.reader.read(n)
+    
