@@ -71,14 +71,14 @@ async def run_task(socket: Connection, task_name, task_args, return_type) -> Non
             cwd = task_dir
         )
         
-        # stdout, stderr = await process.communicate()
+        stdout, stderr = await process.communicate()
 
-        # if process.returncode == 0:
-        #     logging.info(f"task: {task_name} completed with return code: {process.returncode}")
-        #     await socket.send("task-finished", {"task_name": task_name, "return_value": stdout.decode()})
-        # else:
-        #     logging.error(f"task: {task_name} failed with return code: {process.returncode}")
-        #     await socket.send("task-failed", {"task_name": task_name, "return_value": stderr.decode()})
+        if process.returncode == 0:
+            logging.info(f"task: {task_name} completed with return code: {process.returncode}")
+            await socket.send("task-finished", {"task_name": task_name, "return_value": stdout.decode()})
+        else:
+            logging.error(f"task: {task_name} failed with return code: {process.returncode}")
+            await socket.send("task-failed", {"task_name": task_name, "return_value": stderr.decode()})
 
     except Exception as e:
         logging.error(f"error running task: {task_name}", e)
