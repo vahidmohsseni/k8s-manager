@@ -74,6 +74,7 @@ def create_task(task_name: str):
         cmd["cmd"] = "CREATE-TASK"
         cmd["args"] = [task_name, command, return_type]
         _request.send_json(cmd)
+        reply = _request.recv_json()
         return jsonify({"status": f"task: {task_name} created successfuly."}), 201
     
     return jsonify({"status": "Error!"}), 400
@@ -121,10 +122,17 @@ def start_task(task_name: str):
 
 @bp.route("/tasks/<string:task_name>/stop", methods=["POST"])
 def stop_task(task_name: str):
-    # TODO:
     # 1. check the task exists
     # 2. stop the task if it is running
-    return jsonify({"task": task_name}), 200
+    if task_name not in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
+        return jsonify({"status": "task does not exist"}), 404
+    
+    cmd = REQUEST.copy()
+    cmd["cmd"] = "STOP-TASK"
+    cmd["args"] = [task_name]
+    _request.send_json(cmd)
+    reply = _request.recv_json()
+    return jsonify(reply), 200 if reply["status"] == "ok" else 404
 
 
 @bp.route("/tasks/<string:task_name>/status", methods=["GET"])
@@ -149,4 +157,3 @@ def download_task(task_name: str):
         return jsonify({"status": "task does not exist"}), 404
 
     return send_from_directory(uploads, os.listdir(uploads)[0])
-

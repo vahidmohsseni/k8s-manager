@@ -13,6 +13,7 @@ logging.basicConfig(#filename="backend-service.log",
                     format=FORMAT,
                     level=logging.DEBUG)
 
+PROCESS = None
 
 def download_task(task_name):
     """
@@ -50,6 +51,7 @@ async def run_task(socket: Connection, task_name, task_args, return_type) -> Non
     """
     Run the task
     """
+    global PROCESS
     if not download_task(task_name):
         return
 
@@ -63,7 +65,7 @@ async def run_task(socket: Connection, task_name, task_args, return_type) -> Non
     python_dir = os.getcwd() + "/.tasks/" + "venv/bin"
     task_args = task_args.split(" ")
     try:
-        process: asyncio.subprocess.Process = await asyncio.subprocess.create_subprocess_exec(
+        PROCESS = await asyncio.subprocess.create_subprocess_exec(
             
             python_dir + "/python", 
             *task_args,
@@ -72,17 +74,35 @@ async def run_task(socket: Connection, task_name, task_args, return_type) -> Non
             cwd = task_dir
         )
         
-        stdout, stderr = await process.communicate()
+        stdout, stderr = await PROCESS.communicate()
 
-        if process.returncode == 0:
-            logging.info(f"task: {task_name} completed with return code: {process.returncode}")
+        if PROCESS.returncode == 0:
+            logging.info(f"task: {task_name} completed with return code: {PROCESS.returncode}")
             await socket.send("task-finished", {"task_name": task_name, "return_value": stdout.decode()})
+        elif PROCESS.returncode == -15:
+            logging.info(f"task: {task_name} terminated with return code: {PROCESS.returncode}")
+            await socket.send("task-stopped", {"task_name": task_name, "return_value": stdout.decode()})
         else:
-            logging.error(f"task: {task_name} failed with return code: {process.returncode}")
+            logging.error(f"task: {task_name} failed with return code: {PROCESS.returncode}")
             await socket.send("task-failed", {"task_name": task_name, "return_value": stderr.decode()})
+
+        PROCESS = None
 
     except Exception as e:
         logging.error(f"error running task: {task_name}", e)
+
+
+def stop_task():
+    """
+    Stop the task
+    """
+    global PROCESS
+    if PROCESS is not None:
+        PROCESS.terminate()
+        PROCESS.wait()
+        logging.info("task stopped")
+    else:
+        logging.warning("no task running")
 
 
 async def send_info(socket: Connection) -> None:
@@ -115,12 +135,15 @@ async def handler(socket: Connection) -> None:
             exit(1)
         elif data[0] == "pong":
             socket.last_heartbeat = time.time()
+            logging.info("heartbeat received")
         elif data[0] == "task":
             print(data)
             # create a task
             asyncio.create_task(
                 run_task(socket, data[3]["task_name"], data[3]["args_to_run"], data[3]["return_type"])
                 )
+        elif data[0] == "stop-task":
+            stop_task()
         else:
             print(data)
 

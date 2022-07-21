@@ -20,6 +20,7 @@ class Task:
         finished: task is finished
         failed: task is failed
         deleted: task is deleted
+        stopeed: task is stopped
         """
         self.status = status
         if return_value is not None:

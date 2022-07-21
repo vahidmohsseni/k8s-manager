@@ -13,7 +13,7 @@ class Server:
     def __init__(self) -> None:
         self._address = "0.0.0.0"
         self._port = 5556
-        self.connections = []
+        self.connections: List[Connection] = []
         self.counter = 1
         self.tasks_list: List[Task] = []
 
@@ -69,3 +69,14 @@ class Server:
                 if task.status == "created":
                     await self.schedule_task(task)
             await asyncio.sleep(1)
+
+    async def stop_task(self, task_name):
+        for task in self.tasks_list:
+            if task.name == task_name:
+                worker_name = task.assigned_to
+                for connection in self.connections:
+                    print(connection.name)
+                    if connection.name == worker_name:
+                        await connection.stop_task()
+                        return {"status": "ok"}
+        return {"status": "error", "message": "task not found"}

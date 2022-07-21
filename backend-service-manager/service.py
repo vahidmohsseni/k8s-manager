@@ -26,15 +26,13 @@ def get_tasks(args):
 
 def create_task(args):
     """args order: task_name, task_args, task_return_type"""
-    print("dsandjandjanjdsa", args)
-    try:
-        task = Task(args[0], args[1], args[2])
-        server.tasks_list.append(task)
-    except Exception as e:
-        print(e)
-        return {"status": "error", "message": str(e)}
-    print("task created")
+    task = Task(args[0], args[1], args[2])
+    server.tasks_list.append(task)
     return {"status": "ok"}
+
+
+async def stop_task(args) -> None:
+    return await server.stop_task(args[0])
 
 
 def default_response(args):
@@ -49,9 +47,10 @@ async def ping() -> None:
 
 
 async def api_call() -> None:
-    PROCESS_MAPS = {"GET-TASKS": get_tasks,
-                    "DEFAULT": default_response,
-                    "CREATE-TASK": create_task,
+    PROCESS_MAPS = {"GET-TASKS": (get_tasks, None),
+                    "DEFAULT": (default_response, None),
+                    "CREATE-TASK": (create_task, None),
+                    "STOP-TASK": (stop_task, "async")
                     }
     reply = context.socket(zmq.REP)
     # TODO: read the socket address from arguments
@@ -64,7 +63,11 @@ async def api_call() -> None:
         
         cmd = req.get("cmd", "DEFAULT")
         args = req.get("args", None)
-        reply.send_json(PROCESS_MAPS[cmd](args))
+        reply.send_json(
+            PROCESS_MAPS[cmd][0](args)
+            if PROCESS_MAPS[cmd][1] is None 
+            else await PROCESS_MAPS[cmd][0](args)
+            )
 
 
 async def node_controller() -> None:

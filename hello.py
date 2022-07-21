@@ -11,6 +11,6 @@ if __name__ == "__main__":
     for i in range(counter):
         print("this is a number: ", i)
         sys.stdout.flush()
-        time.sleep(1)
+        time.sleep(10)
         # if i == 2:
         #     raise Exception("this is an exception")

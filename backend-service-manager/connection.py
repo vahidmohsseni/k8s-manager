@@ -29,6 +29,11 @@ class Connection:
         # update task status
         self.task.change_status("scheduled")
         self.task.set_assigned_node(self.name)
+
+    async def stop_task(self):
+        # SUGGESTION:
+        # we can check the task name here and make sure they are same
+        await self.send("stop-task")
     
     def unset_task(self):
         self.task = None
@@ -55,6 +60,10 @@ class Connection:
             elif data[0] == "task-failed":
                 logging.debug(f"{self.name} node failed task: {data[3]}")
                 self.task.change_status("failed", data[3]["return_value"])
+                self.unset_task()
+            elif data[0] == "task-stopped":
+                logging.debug(f"{self.name} node stopped task: {data[3]}")
+                self.task.change_status("stopped")
                 self.unset_task()
             else:
                 print(data)
