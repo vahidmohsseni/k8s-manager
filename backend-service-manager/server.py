@@ -75,7 +75,6 @@ class Server:
             if task.name == task_name:
                 worker_name = task.assigned_to
                 for connection in self.connections:
-                    print(connection.name)
                     if connection.name == worker_name:
                         await connection.stop_task()
                         return {"status": "ok"}
@@ -86,5 +85,14 @@ class Server:
         for task in self.tasks_list:
             if task.name == task_name:
                 self.tasks_list.remove(task)
+                return {"status": "ok"}
+        return {"status": "error", "message": "task not found"}
+    
+    async def start_task(self, task_name):
+        for task in self.tasks_list:
+            if task.name == task_name:
+                if task.status != "stopped":
+                    return {"status": "error", "message": f"you can only start a stopped task, current status is {task.status}"}
+                await self.schedule_task(task)
                 return {"status": "ok"}
         return {"status": "error", "message": "task not found"}

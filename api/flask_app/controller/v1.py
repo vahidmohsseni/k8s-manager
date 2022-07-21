@@ -122,10 +122,18 @@ def update_task(task_name: str):
 
 @bp.route("/tasks/<string:task_name>/start", methods=["POST"])
 def start_task(task_name: str):
-    # TODO:
     # 1. check the task exists
     # 2. start the task if it is not running
-    return jsonify({"task": task_name}), 200
+    if task_name not in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
+        return jsonify({"status": "task does not exist"}), 404
+
+    cmd = REQUEST.copy()
+    cmd["cmd"] = "START-TASK"
+    cmd["args"] = [task_name]
+    _request.send_json(cmd)
+    reply = _request.recv_json()
+    
+    return jsonify(reply), 200
 
 
 @bp.route("/tasks/<string:task_name>/stop", methods=["POST"])
@@ -148,6 +156,9 @@ def task_status(task_name: str):
     # TODO:
     # 1. check the task exists
     # 2. get the task status
+    if task_name not in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
+        return jsonify({"status": "task does not exist"}), 404
+    
     return jsonify({"task": task_name}), 200
 
 

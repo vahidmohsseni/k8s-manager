@@ -19,4 +19,8 @@ then
 elif [ $1 = "stop" ]
 then
     curl -X POST http://localhost:5001/api/v1/tasks/first/stop
+
+elif [ $1 = "start" ]
+then
+    curl -X POST http://localhost:5001/api/v1/tasks/first/start
 fi
