@@ -54,6 +54,7 @@ async def run_task(socket: Connection, task_name, task_args, return_type) -> Non
         return
 
     logging.info(f"running task: {task_name}")
+    await socket.send("task-running", {"task_name": task_name})
     task_dir = [dir
         for dir in os.listdir(os.getcwd() + "/.tasks/") if (task_name in dir and "venv" != dir)
         ]
