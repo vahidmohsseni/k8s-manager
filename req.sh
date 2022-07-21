@@ -7,7 +7,7 @@ then
 
 elif [ "$1" = "create" ]
 then
-    curl -X POST -F "file=@hello.py" -F "cmd=hello.py" -F "rt=None" http://localhost:5001/api/v1/tasks/first
+    curl -X POST -F "file=@hello.py" -F "cmd=hello.py 6" -F "rt=None" http://localhost:5001/api/v1/tasks/first
 
 elif [ "$1" = "delete" ]
 then

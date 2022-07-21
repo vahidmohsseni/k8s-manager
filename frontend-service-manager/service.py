@@ -46,7 +46,7 @@ def download_task(task_name):
     return 1
 
 
-async def run_task(task_name, task_args, return_type) -> None:
+async def run_task(socket: Connection, task_name, task_args, return_type) -> None:
     """
     Run the task
     """
@@ -62,16 +62,26 @@ async def run_task(task_name, task_args, return_type) -> None:
     python_dir = os.getcwd() + "/.tasks/" + "venv/bin"
     task_args = task_args.split(" ")
     try:
-        process = subprocess.Popen(
-            [
-                python_dir + "/python",
-            ] + task_args,
+        process: asyncio.subprocess.Process = await asyncio.subprocess.create_subprocess_exec(
+            
+            python_dir + "/python", 
+            *task_args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
             cwd = task_dir
         )
-        process.wait()
+        
+        # stdout, stderr = await process.communicate()
+
+        # if process.returncode == 0:
+        #     logging.info(f"task: {task_name} completed with return code: {process.returncode}")
+        #     await socket.send("task-finished", {"task_name": task_name, "return_value": stdout.decode()})
+        # else:
+        #     logging.error(f"task: {task_name} failed with return code: {process.returncode}")
+        #     await socket.send("task-failed", {"task_name": task_name, "return_value": stderr.decode()})
+
     except Exception as e:
         logging.error(f"error running task: {task_name}", e)
-    logging.info(f"task: {task_name} finished")
 
 
 async def send_info(socket: Connection) -> None:
@@ -106,7 +116,10 @@ async def handler(socket: Connection) -> None:
             socket.last_heartbeat = time.time()
         elif data[0] == "task":
             print(data)
-            await run_task(data[3]["task_name"], data[3]["args_to_run"], data[3]["return_type"])
+            # create a task
+            asyncio.create_task(
+                run_task(socket, data[3]["task_name"], data[3]["args_to_run"], data[3]["return_type"])
+                )
         else:
             print(data)
 

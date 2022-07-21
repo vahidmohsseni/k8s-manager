@@ -93,6 +93,38 @@ async def main():
         c.cancel()
  
 
+def fun_sync_blocking():
+    for i in range(10):
+        print("sync_blocking outputs", i)
+        # await asyncio.sleep(1)
+        time.sleep(1)
+
+async def async_blocking():
+    for i in range(10):
+        print("async blocking outputs", i)
+        await asyncio.sleep(1)
+
+
+async def main_test_async_sync():
+    print("start main_test_async_sync")
+    asyncio.to_thread(fun_sync_blocking)
+    await fun_sync_blocking()
+    print("end main_test_async_sync")
+
+
+import subprocess
+
+def run_thread_subprocess():
+    print("running hello.py")
+    process: subprocess.Popen = subprocess.Popen(["python", "hello.py", "3"], stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+    print("reading data")
+    while True:
+        line = process.stdout.readline()
+        if line == b'':
+            break
+        print(line)
+
+
 if __name__ == "__main__":
     # t = Thread(target=delete_task, args=())
     # t.start()
@@ -108,4 +140,10 @@ if __name__ == "__main__":
     #         ]
     #     )
     # )
-    asyncio.run(main())
+    # asyncio.run(main())
+
+    # asyncio.run(
+    #     main_test_async_sync()
+    # )
+
+    run_thread_subprocess()
