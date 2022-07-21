@@ -80,3 +80,11 @@ class Server:
                         await connection.stop_task()
                         return {"status": "ok"}
         return {"status": "error", "message": "task not found"}
+    
+    async def delete_task(self, task_name):
+        await self.stop_task(task_name)
+        for task in self.tasks_list:
+            if task.name == task_name:
+                self.tasks_list.remove(task)
+                return {"status": "ok"}
+        return {"status": "error", "message": "task not found"}

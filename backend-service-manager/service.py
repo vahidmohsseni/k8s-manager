@@ -31,8 +31,12 @@ def create_task(args):
     return {"status": "ok"}
 
 
-async def stop_task(args) -> None:
+async def stop_task(args):
     return await server.stop_task(args[0])
+
+
+async def delete_task(args):
+    return await server.delete_task(args[0])
 
 
 def default_response(args):
@@ -50,7 +54,8 @@ async def api_call() -> None:
     PROCESS_MAPS = {"GET-TASKS": (get_tasks, None),
                     "DEFAULT": (default_response, None),
                     "CREATE-TASK": (create_task, None),
-                    "STOP-TASK": (stop_task, "async")
+                    "STOP-TASK": (stop_task, "async"),
+                    "DELETE-TASK": (delete_task, "async"),
                     }
     reply = context.socket(zmq.REP)
     # TODO: read the socket address from arguments

@@ -89,8 +89,12 @@ def delete_task(task_name: str):
     if task_name not in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
         return jsonify({"status": "task does not exist"}), 404
     
-    # TODO: shutdown the task if it is on the backend service
-
+    cmd = REQUEST.copy()
+    cmd["cmd"] = "DELETE-TASK"
+    cmd["args"] = [task_name]
+    _request.send_json(cmd)
+    reply = _request.recv_json()
+    print("from server", reply)
     os.remove(
         os.path.join(current_app.config["UPLOAD_DIRECTORY"],
                      task_name,
@@ -100,7 +104,11 @@ def delete_task(task_name: str):
                     )
             )
     os.rmdir(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name))
-    return jsonify({"status": f"task: {task_name} deleted successfuly."}), 200
+    return jsonify(
+        {
+            "status": f"task: {task_name} deleted successfuly.", 
+            "backend-status": reply["status"]
+        }), 200
 
 
 @bp.route("/tasks/<string:task_name>", methods=["PUT"])

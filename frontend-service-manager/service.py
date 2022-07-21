@@ -99,7 +99,6 @@ def stop_task():
     global PROCESS
     if PROCESS is not None:
         PROCESS.terminate()
-        PROCESS.wait()
         logging.info("task stopped")
     else:
         logging.warning("no task running")
