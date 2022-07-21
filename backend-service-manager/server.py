@@ -2,7 +2,7 @@ import time
 import json
 import asyncio
 from typing import List
-
+import logging
 
 from task import Task
 
@@ -16,6 +16,21 @@ class Connection:
         self.name = name
         self.info = None
         self.status = "ready" # ready, busy, offline
+        self.task: Task = None
+    
+    
+    async def set_task(self, task: Task):
+        self.task = task
+        payload = {
+            "task_name": task.name,
+            "args_to_run": task.args_to_run,
+            "return_type": task.return_type,
+        }
+        await self.send("task", payload)
+        self.status = "busy"
+        # update task status
+        self.task.change_status("scheduled")
+        self.task.set_assigned_node(self.name)
 
 
     async def handler(self):
@@ -28,7 +43,22 @@ class Connection:
                 await self.send("pong")
             elif data[0] == "info":
                 self.info = data[3]
-                print(self.name, self.info)
+                logging.debug(f"{self.name} received info: {self.info}")
+            elif data[0] == "task-running":
+                print(self.name, "task running", data[3])
+                self.task.change_status("running")
+            elif data[0] == "task-finished":
+                print(self.name, "task finished", data[3])
+                self.task.change_status("finished")
+                self.status = "ready"
+                self.task.return_value = data[3]["return_value"]
+                self.task = None
+            elif data[0] == "task-failed":
+                print(self.name, "task failed", data[3])
+                self.task.change_status("failed")
+                self.status = "ready"
+                self.task.return_value = data[3]["return_value"]
+                self.task = None
             else:
                 print(data)
     
@@ -183,16 +213,7 @@ class Server:
             return 
         # send the task to the node
         conn: Connection = self.connections[index]
-        payload = {
-            "task_name": task.name,
-            "args_to_run": task.args_to_run,
-            "return_type": task.return_type,
-        }
-        await conn.send("task", payload)
-        conn.status = "busy"
-        # update task status
-        task.change_status("scheduled")
-        task.set_assigned_node(conn.name)
+        await conn.set_task(task)
 
 
     async def task_manager(self) -> None:
