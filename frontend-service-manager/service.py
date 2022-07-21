@@ -127,24 +127,25 @@ async def heartbeat(socket: Connection) -> None:
 async def handler(socket: Connection) -> None:
     await asyncio.sleep(2)
     while True:
-        data = await socket.recv()
-        if data[0] == "":
-            # TODO: handle the case when the server is not available
-            logging.error("connection closed!")
-            exit(1)
-        elif data[0] == "pong":
-            socket.last_heartbeat = time.time()
-            logging.info("heartbeat received")
-        elif data[0] == "task":
-            print(data)
-            # create a task
-            asyncio.create_task(
-                run_task(socket, data[3]["task_name"], data[3]["args_to_run"], data[3]["return_type"])
-                )
-        elif data[0] == "stop-task":
-            stop_task()
-        else:
-            print(data)
+        data_generator = socket.recv()
+        async for data in data_generator:
+            if data[0] == "":
+                # TODO: handle the case when the server is not available
+                logging.error("connection closed!")
+                exit(1)
+            elif data[0] == "pong":
+                socket.last_heartbeat = time.time()
+                logging.info("heartbeat received")
+            elif data[0] == "task":
+                print(data)
+                # create a task
+                asyncio.create_task(
+                    run_task(socket, data[3]["task_name"], data[3]["args_to_run"], data[3]["return_type"])
+                    )
+            elif data[0] == "stop-task":
+                stop_task()
+            else:
+                print(data)
 
 
 async def reconnect(socket: Connection) -> None:

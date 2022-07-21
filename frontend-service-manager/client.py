@@ -93,7 +93,7 @@ class Connection:
     async def recv(self):
         data = await self._recv()
         header, payload_length, payload_type, payload = self.deserialize(data)
-        return header, payload_length, payload_type, payload
+        yield header, payload_length, payload_type, payload
 
     async def _send(self, data):
         self.writer.write(data)
