@@ -9,9 +9,9 @@ class Task:
         self.return_type = return_type
         self.assigned_to = None
         self.lock = Lock()
+        self.return_value = None
 
-
-    def change_status(self, status):
+    def change_status(self, status, return_value=None):
         """
         Accepted Values: created, scheduled, running, finished, failed, deleted
         created: task is created but not scheduled
@@ -22,7 +22,8 @@ class Task:
         deleted: task is deleted
         """
         self.status = status
-
-
+        if return_value is not None:
+            self.return_value = return_value
+            
     def set_assigned_node(self, node_name):
         self.assigned_to = node_name

@@ -12,5 +12,5 @@ if __name__ == "__main__":
         print("this is a number: ", i)
         sys.stdout.flush()
         time.sleep(1)
-        if i == 2:
-            raise Exception("this is an exception")
+        # if i == 2:
+        #     raise Exception("this is an exception")

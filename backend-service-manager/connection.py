@@ -3,7 +3,6 @@ import time
 import logging
 import json
 
-
 from task import Task
 
 
@@ -30,6 +29,10 @@ class Connection:
         # update task status
         self.task.change_status("scheduled")
         self.task.set_assigned_node(self.name)
+    
+    def unset_task(self):
+        self.task = None
+        self.status = "ready"
 
     async def handler(self):
         while True:
@@ -43,20 +46,16 @@ class Connection:
                 self.info = data[3]
                 logging.debug(f"{self.name} received info: {self.info}")
             elif data[0] == "task-running":
-                print(self.name, "task running", data[3])
+                logging.debug(f"{self.name} node is running task: {data[3]}")
                 self.task.change_status("running")
             elif data[0] == "task-finished":
-                print(self.name, "task finished", data[3])
-                self.task.change_status("finished")
-                self.status = "ready"
-                self.task.return_value = data[3]["return_value"]
-                self.task = None
+                logging.debug(f"{self.name} node finished task: {data[3]}")
+                self.task.change_status("finished", data[3]["return_value"])
+                self.unset_task()
             elif data[0] == "task-failed":
-                print(self.name, "task failed", data[3])
-                self.task.change_status("failed")
-                self.status = "ready"
-                self.task.return_value = data[3]["return_value"]
-                self.task = None
+                logging.debug(f"{self.name} node failed task: {data[3]}")
+                self.task.change_status("failed", data[3]["return_value"])
+                self.unset_task()
             else:
                 print(data)
     
