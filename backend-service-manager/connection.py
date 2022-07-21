@@ -41,32 +41,33 @@ class Connection:
 
     async def handler(self):
         while True:
-            data = await self.recv()
-            if data[0] == "":
-                break
-            elif data[0] == "ping":
-                self.last_heartbeat = time.time()
-                await self.send("pong")
-            elif data[0] == "info":
-                self.info = data[3]
-                logging.debug(f"{self.name} received info: {self.info}")
-            elif data[0] == "task-running":
-                logging.debug(f"{self.name} node is running task: {data[3]}")
-                self.task.change_status("running")
-            elif data[0] == "task-finished":
-                logging.debug(f"{self.name} node finished task: {data[3]}")
-                self.task.change_status("finished", data[3]["return_value"])
-                self.unset_task()
-            elif data[0] == "task-failed":
-                logging.debug(f"{self.name} node failed task: {data[3]}")
-                self.task.change_status("failed", data[3]["return_value"])
-                self.unset_task()
-            elif data[0] == "task-stopped":
-                logging.debug(f"{self.name} node stopped task: {data[3]}")
-                self.task.change_status("stopped")
-                self.unset_task()
-            else:
-                print(data)
+            data_generator = self.recv()
+            async for data in data_generator:
+                if data[0] == "":
+                    break
+                elif data[0] == "ping":
+                    self.last_heartbeat = time.time()
+                    await self.send("pong")
+                elif data[0] == "info":
+                    self.info = data[3]
+                    logging.debug(f"{self.name} received info: {self.info}")
+                elif data[0] == "task-running":
+                    logging.debug(f"{self.name} node is running task: {data[3]}")
+                    self.task.change_status("running")
+                elif data[0] == "task-finished":
+                    logging.debug(f"{self.name} node finished task: {data[3]}")
+                    self.task.change_status("finished", data[3]["return_value"])
+                    self.unset_task()
+                elif data[0] == "task-failed":
+                    logging.debug(f"{self.name} node failed task: {data[3]}")
+                    self.task.change_status("failed", data[3]["return_value"])
+                    self.unset_task()
+                elif data[0] == "task-stopped":
+                    logging.debug(f"{self.name} node stopped task: {data[3]}")
+                    self.task.change_status("stopped")
+                    self.unset_task()
+                else:
+                    print(data)
     
     @classmethod
     def serialize(cls, header: str, payload):
@@ -145,7 +146,7 @@ class Connection:
     async def recv(self):
         data = await self._recv()
         header, payload_length, payload_type, payload = self.deserialize(data)
-        return header, payload_length, payload_type, payload
+        yield header, payload_length, payload_type, payload
 
     async def _send(self, data):
         self.writer.write(data)
