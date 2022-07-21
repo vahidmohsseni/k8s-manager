@@ -89,6 +89,8 @@ class Connection:
         data += b"\0" * (16 - len(data))
         # check if payload is None
         if payload is None:
+            zero = 0
+            data += zero.to_bytes(5, "big")
             return data
         # reserve 4 byte for payload type
         if isinstance(payload, str):

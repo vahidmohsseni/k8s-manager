@@ -36,6 +36,8 @@ class Connection:
         data += b"\0" * (16 - len(data))
         # check if payload is None
         if payload is None:
+            zero = 0
+            data += zero.to_bytes(5, "big")
             return data
         # reserve 4 byte for payload type
         if isinstance(payload, str):
@@ -85,6 +87,13 @@ class Connection:
 
         return header, payload_length, payload_type, payload
 
+    @classmethod
+    def seperator(cls, data):
+        """
+        Seperate multibyte data indicating with their index
+        """
+        pass
+
     async def send(self, header, payload = None):
         # TODO: missing mechanism for data larger than 1024 bytes
         data = self.serialize(header, payload)
@@ -110,3 +119,6 @@ if __name__ == "__main__":
     print(data)
     header, payload_length, payload_type, payload = Connection.deserialize(data)
     print(header, payload_length, payload_type, payload)
+
+    multi_data = b'task\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Jjson{"task_name": "first", "args_to_run": "hello.py 6", "return_type": "None"}pong\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+    multi_data += multi_data
