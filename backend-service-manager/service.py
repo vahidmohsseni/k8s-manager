@@ -11,7 +11,7 @@ from task import Task
 FORMAT = '%(asctime)s %(levelname)s %(message)s'
 logging.basicConfig(#filename="backend-service.log",
                     format=FORMAT,
-                    level=logging.DEBUG)
+                    level=logging.WARNING)
 
 
 QUEUE_MAX_SIZE = 20
@@ -42,6 +42,10 @@ async def start_task(args):
     return await server.start_task(args[0])
 
 
+def task_status(args):
+    return server.task_status(args[0])
+
+
 def default_response(args):
     return {"status": "not applicable"}
 
@@ -60,6 +64,7 @@ async def api_call() -> None:
                     "STOP-TASK": (stop_task, "async"),
                     "DELETE-TASK": (delete_task, "async"),
                     "START-TASK": (start_task, "async"),
+                    "TASK-STATUS": (task_status, None)
                     }
     reply = context.socket(zmq.REP)
     # TODO: read the socket address from arguments

@@ -95,3 +95,9 @@ class Server:
                 await self.schedule_task(task)
                 return {"status": "ok"}
         return {"status": "error", "message": "task not found"}
+
+    def task_status(self, task_name):
+        for task in self.tasks_list:
+            if task.name == task_name:
+                return {"status": "ok", "task_status": task.status}
+        return {"status": "error", "message": "task not found"}

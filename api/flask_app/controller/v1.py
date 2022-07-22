@@ -158,7 +158,12 @@ def task_status(task_name: str):
     if task_name not in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
         return jsonify({"status": "task does not exist"}), 404
     
-    return jsonify({"task": task_name}), 200
+    cmd = REQUEST.copy()
+    cmd["cmd"] = "TASK-STATUS"
+    cmd["args"] = [task_name]
+    _request.send_json(cmd)
+    reply = _request.recv_json()
+    return jsonify(reply), 200
 
 
 @bp.route("/tasks/<string:task_name>/results", methods=["GET"])
