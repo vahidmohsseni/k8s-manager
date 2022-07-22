@@ -69,7 +69,7 @@ class Connection:
                     self.task.change_status("stopped")
                     self.unset_task()
                 else:
-                    print(data)
+                    print("not implemented for: ", data)
     
     @classmethod
     def serialize(cls, header: str, payload):

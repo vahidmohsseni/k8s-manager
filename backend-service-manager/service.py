@@ -1,5 +1,4 @@
 import asyncio
-import time
 import zmq
 from zmq.asyncio import Context
 import logging
