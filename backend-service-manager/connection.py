@@ -40,10 +40,12 @@ class Connection:
         self.status = "ready"
 
     async def handler(self):
-        while True:
+        break_flag = False
+        while not break_flag:
             data_generator = self.recv()
             async for data in data_generator:
                 if data[0] == "":
+                    break_flag = True
                     break
                 elif data[0] == "ping":
                     self.last_heartbeat = time.time()
@@ -140,6 +142,24 @@ class Connection:
 
         return header, payload_length, payload_type, payload
 
+    @classmethod
+    def seperator(cls, data):
+        """
+        Seperate multibyte data indicating with their index
+        """
+        start_index = 0
+        sep = 0
+        while True:
+            payload_length = int.from_bytes(data[start_index + 16:start_index + 21], "big")
+            if payload_length == 0:
+                sep += 21
+            else:
+                sep += 25 + payload_length
+            yield start_index, sep 
+            start_index = sep
+            if sep + 1 > len(data):
+                break
+    
     async def send(self, header, payload = None):
         # TODO: missing mechanism for data larger than 1024 bytes
         data = self.serialize(header, payload)
@@ -147,8 +167,9 @@ class Connection:
 
     async def recv(self):
         data = await self._recv()
-        header, payload_length, payload_type, payload = self.deserialize(data)
-        yield header, payload_length, payload_type, payload
+        for (start_index, sep) in self.seperator(data):
+            header, payload_length, payload_type, payload = self.deserialize(data[start_index:sep])
+            yield header, payload_length, payload_type, payload
 
     async def _send(self, data):
         self.writer.write(data)

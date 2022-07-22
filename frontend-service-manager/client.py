@@ -92,8 +92,19 @@ class Connection:
         """
         Seperate multibyte data indicating with their index
         """
-        pass
-
+        start_index = 0
+        sep = 0
+        while True:
+            payload_length = int.from_bytes(data[start_index + 16:start_index + 21], "big")
+            if payload_length == 0:
+                sep += 21
+            else:
+                sep += 25 + payload_length
+            yield start_index, sep 
+            start_index = sep
+            if sep + 1 > len(data):
+                break
+ 
     async def send(self, header, payload = None):
         # TODO: missing mechanism for data larger than 1024 bytes
         data = self.serialize(header, payload)
@@ -101,8 +112,9 @@ class Connection:
     
     async def recv(self):
         data = await self._recv()
-        header, payload_length, payload_type, payload = self.deserialize(data)
-        yield header, payload_length, payload_type, payload
+        for (start_index, sep) in self.seperator(data):
+            header, payload_length, payload_type, payload = self.deserialize(data[start_index:sep])
+            yield header, payload_length, payload_type, payload
 
     async def _send(self, data):
         self.writer.write(data)
@@ -113,6 +125,7 @@ class Connection:
 
 
 if __name__ == "__main__":
+    # TEST Example of serialize and deserialize
     header = "info"
     payload = {"cpu": "50%", "memory": "50%"}
     data = Connection.serialize(header, payload)
@@ -120,5 +133,14 @@ if __name__ == "__main__":
     header, payload_length, payload_type, payload = Connection.deserialize(data)
     print(header, payload_length, payload_type, payload)
 
-    multi_data = b'task\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Jjson{"task_name": "first", "args_to_run": "hello.py 6", "return_type": "None"}pong\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+    multi_data = b'task\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00Jjson{"task_name": "first", "args_to_run": "hello.py 6", "return_type": "None"}pong\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
     multi_data += multi_data
+    data = multi_data
+    print(len(data))
+    # print(data[:99])
+    # print(data[99:99+21])
+    # print(data[99+21:99+21+99])
+    # print(data[99+21+99:99+21+99+21])
+
+    for start_index, sep in Connection.seperator(data):
+        print(Connection.deserialize(data[start_index:sep]))
