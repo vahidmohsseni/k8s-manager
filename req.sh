@@ -23,4 +23,8 @@ then
 elif [ $1 = "start" ]
 then
     curl -X POST http://localhost:5001/api/v1/tasks/first/start
+
+elif [ $1 = "status" ]
+then 
+    curl -X GET http://localhost:5001/api/v1/tasks/first/status
 fi
