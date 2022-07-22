@@ -17,7 +17,7 @@ PROCESS = None
 
 def download_task(task_name):
     """
-    Download the task from the server
+    Downloads the task from the server
     """
     base_address = "http://localhost:5001/api/v1"
     url = base_address + "/tasks/" + task_name + "/download"
@@ -49,7 +49,7 @@ def download_task(task_name):
 
 async def run_task(socket: Connection, task_name, task_args, return_type) -> None:
     """
-    Run the task
+    Runs the task
     """
     global PROCESS
     if not download_task(task_name):
@@ -94,7 +94,7 @@ async def run_task(socket: Connection, task_name, task_args, return_type) -> Non
 
 def stop_task():
     """
-    Stop the task
+    Stops the task
     """
     global PROCESS
     if PROCESS is not None:
@@ -105,9 +105,9 @@ def stop_task():
 
 
 async def send_info(socket: Connection) -> None:
-    # get some information about the system
+    # gets some information about the system
     # such as cpu usage, memory usage, etc.
-    # send info to server
+    # sends info to server
     await asyncio.sleep(2)
     while True:
         cpu_usage =  psutil.cpu_percent()
@@ -118,7 +118,7 @@ async def send_info(socket: Connection) -> None:
 
 async def heartbeat(socket: Connection) -> None:
     await asyncio.sleep(1.6)
-    # send heartbeat to server
+    # sends heartbeat to server
     while True:
         await socket.send("ping")
         await asyncio.sleep(2)
@@ -166,7 +166,7 @@ async def reconnect(socket: Connection) -> None:
 
 def create_virtual_environment() -> None:
     """
-    Run the init.sh to build the virtual environment
+    Runs the init.sh to build the virtual environment
     """
     logging.info("creating virtual environment")
     subprocess.run(["bash", "init.sh"])

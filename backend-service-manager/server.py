@@ -29,21 +29,21 @@ class Server:
         await connection.handler()
 
     async def control(self) -> None:
-        # check if any connections are dead
-        # if so, terminate it and remove it from the list
+        # checks if any connections are dead
+        # if so, terminates it and removes it from the list
         while True:
             for connection in self.connections:
                 if time.time() - connection.last_heartbeat > 10:
                     connection.writer.close()
-                    print(f"connection {connection.name} is closed")
+                    logging.warning(f"connection {connection.name} is closed")
                     self.connections.remove(connection)
             await asyncio.sleep(1)
 
     def _find_ready_node(self) -> int:
         """
-        find the first ready node in the list of connections
-        return the index of the node
-        if no node is ready, return -1
+        finds the first ready node in the list of connections
+        returns the index of the node
+        if no node is ready, returns -1
         """
         for i, connection in enumerate(self.connections):
             if connection.status == "ready":

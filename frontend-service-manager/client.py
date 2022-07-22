@@ -65,7 +65,7 @@ class Connection:
     @classmethod
     def deserialize(cls, data):
         """
-        Deserialize the data into a tuple of:
+        Deserializes the data into a tuple of:
             (header, payload_length, payload_type, payload)
         """
         header = data[:16].decode()
@@ -89,7 +89,7 @@ class Connection:
     @classmethod
     def seperator(cls, data):
         """
-        Seperate multibyte data indicating with their index
+        Seperates multibyte data indicating with their index
         """
         start_index = 0
         sep = 0
