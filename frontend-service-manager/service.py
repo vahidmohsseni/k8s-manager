@@ -126,12 +126,14 @@ async def heartbeat(socket: Connection) -> None:
 
 async def handler(socket: Connection) -> None:
     await asyncio.sleep(2)
-    while True:
+    break_flag = False
+    while not break_flag:
         data_generator = socket.recv()
         async for data in data_generator:
             if data[0] == "":
                 # TODO: handle the case when the server is not available
                 logging.error("connection closed!")
+                break_flag = True
                 exit(1)
             elif data[0] == "pong":
                 socket.last_heartbeat = time.time()
