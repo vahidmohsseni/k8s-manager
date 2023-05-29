@@ -13,7 +13,7 @@ bp = Blueprint("v1", __name__, url_prefix="/api/v1")
 
 __context = zmq.Context.instance()
 _request: zmq.Socket = __context.socket(zmq.REQ)
-_request.connect("tcp://localhost:5555")
+_request.connect(os.environ.get("SOCKET_ADDRESS", "tcp://0.0.0.0:5555"))
 
 REQUEST = {"cmd": None, "args": None}
 
