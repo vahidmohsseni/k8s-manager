@@ -28,20 +28,29 @@ By decoupling this component from the _Service Manager_, we can scale out or in 
 
 Build the API image
 
-``shell
+```shell
 cd api
 docker build -f Dockerfile -t k8s-manager-api .
-docker run k8s-manager-api -p 5001:5001 --env HOST=0.0.0.0 -d
+docker run -p 5001:5001 --env HOST=0.0.0.0 -d k8s-manager-api
 
-````
+```
 
+Build the service manager image
+
+```shell
+cd backend-service-manager
+docker build -f Dockerfile -t k8s-manager-service .
+docker run -d k8s-manager-service
+```
 
 ## Deployment
+
 It is possible to deploy the components manually or in a Kubernetes cluster.
+
 ```shell
 git pull https://github.com/vahidmohsseni/k8s-manager.git
 cd k8s-manager/
-````
+```
 
 ### Kubernetes
 
