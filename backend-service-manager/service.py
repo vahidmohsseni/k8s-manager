@@ -2,16 +2,15 @@ import asyncio
 import zmq
 from zmq.asyncio import Context
 import logging
-from typing import List
 
 from server import Server
 from task import Task
 
 
-FORMAT = '%(asctime)s %(levelname)s %(message)s'
-logging.basicConfig(#filename="backend-service.log",
-                    format=FORMAT,
-                    level=logging.WARNING)
+FORMAT = "%(asctime)s %(levelname)s %(message)s"
+logging.basicConfig(  # filename="backend-service.log",
+    format=FORMAT, level=logging.INFO
+)
 
 
 QUEUE_MAX_SIZE = 20
@@ -58,14 +57,15 @@ async def ping() -> None:
 
 
 async def api_call() -> None:
-    PROCESS_MAPS = {"GET-TASKS": (get_tasks, None),
-                    "DEFAULT": (default_response, None),
-                    "CREATE-TASK": (create_task, None),
-                    "STOP-TASK": (stop_task, "async"),
-                    "DELETE-TASK": (delete_task, "async"),
-                    "START-TASK": (start_task, "async"),
-                    "TASK-STATUS": (task_status, None)
-                    }
+    PROCESS_MAPS = {
+        "GET-TASKS": (get_tasks, None),
+        "DEFAULT": (default_response, None),
+        "CREATE-TASK": (create_task, None),
+        "STOP-TASK": (stop_task, "async"),
+        "DELETE-TASK": (delete_task, "async"),
+        "START-TASK": (start_task, "async"),
+        "TASK-STATUS": (task_status, None),
+    }
     reply = context.socket(zmq.REP)
     # TODO: read the socket address from arguments
     reply.bind("tcp://*:5555")
@@ -74,25 +74,24 @@ async def api_call() -> None:
         logging.info(f"received request: {req}")
         if not isinstance(req, dict):
             continue
-        
+
         cmd = req.get("cmd", "DEFAULT")
         args = req.get("args", None)
         reply.send_json(
             PROCESS_MAPS[cmd][0](args)
-            if PROCESS_MAPS[cmd][1] is None 
+            if PROCESS_MAPS[cmd][1] is None
             else await PROCESS_MAPS[cmd][0](args)
-            )
+        )
 
 
 async def node_controller() -> None:
     pass
 
 
-
 if __name__ == "__main__":
-    logging.info("Strating the service")
+    logging.info("Starting the service")
     server = Server()
-
+    logging.info(f"Server started at http://{server._address}:{server._port}")
     asyncio.run(
         asyncio.wait(
             [
@@ -101,7 +100,7 @@ if __name__ == "__main__":
                 server.run(),
                 server.control(),
                 server.task_manager(),
-                node_controller()
+                node_controller(),
             ]
         )
     )

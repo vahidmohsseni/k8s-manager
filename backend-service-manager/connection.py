@@ -7,16 +7,15 @@ from task import Task
 
 
 class Connection:
-
     def __init__(self, reader, writer, name) -> None:
         self.reader: asyncio.StreamReader = reader
         self.writer: asyncio.StreamWriter = writer
         self.last_heartbeat: float = time.time()
         self.name = name
         self.info = None
-        self.status = "ready" # ready, busy, offline
+        self.status = "ready"  # ready, busy, offline
         self.task: Task = None
-    
+
     async def set_task(self, task: Task):
         self.task = task
         payload = {
@@ -34,7 +33,7 @@ class Connection:
         # SUGGESTION:
         # we can check the task name here and make sure they are same
         await self.send("stop-task")
-    
+
     def unset_task(self):
         self.task = None
         self.status = "ready"
@@ -70,7 +69,7 @@ class Connection:
                     self.unset_task()
                 else:
                     print("not implemented for: ", data)
-    
+
     @classmethod
     def serialize(cls, header: str, payload):
         """
@@ -83,7 +82,7 @@ class Connection:
             header: "info"
             payload: {"cpu": "50%", "memory": "50%"}
             data = b'info\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1fjson{"cpu": "50%", "memory": "50%"}'
-        """
+        """  # ruff: noqa
         # reserve 20 byte for header
         data = header.encode()
         if len(data) > 16:
@@ -115,9 +114,9 @@ class Connection:
         # file type is not supported yet
         else:
             raise ValueError("payload type is not supported")
-            
+
         return data
-    
+
     @classmethod
     def deserialize(cls, data):
         """
@@ -150,31 +149,34 @@ class Connection:
         start_index = 0
         sep = 0
         while True:
-            payload_length = int.from_bytes(data[start_index + 16:start_index + 21], "big")
+            payload_length = int.from_bytes(
+                data[start_index + 16 : start_index + 21], "big"
+            )
             if payload_length == 0:
                 sep += 21
             else:
                 sep += 25 + payload_length
-            yield start_index, sep 
+            yield start_index, sep
             start_index = sep
             if sep + 1 > len(data):
                 break
-    
-    async def send(self, header, payload = None):
+
+    async def send(self, header, payload=None):
         # TODO: missing mechanism for data larger than 1024 bytes
         data = self.serialize(header, payload)
         await self._send(data)
 
     async def recv(self):
         data = await self._recv()
-        for (start_index, sep) in self.seperator(data):
-            header, payload_length, payload_type, payload = self.deserialize(data[start_index:sep])
+        for start_index, sep in self.seperator(data):
+            header, payload_length, payload_type, payload = self.deserialize(
+                data[start_index:sep]
+            )
             yield header, payload_length, payload_type, payload
 
     async def _send(self, data):
         self.writer.write(data)
         await self.writer.drain()
-    
+
     async def _recv(self, n=1024):
         return await self.reader.read(n)
-    

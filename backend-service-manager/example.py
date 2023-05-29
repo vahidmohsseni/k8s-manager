@@ -3,12 +3,11 @@
 # This example is in the public domain (CC-0)
 
 import asyncio
-import time
 
 import zmq
-from zmq.asyncio import Context, Poller
+from zmq.asyncio import Context
 
-url = 'tcp://127.0.0.1:5555'
+url = "tcp://127.0.0.1:5555"
 
 ctx = Context.instance()
 
@@ -17,7 +16,7 @@ async def ping() -> None:
     """print dots to indicate idleness"""
     while True:
         await asyncio.sleep(0.5)
-        print('.')
+        print(".")
 
 
 async def receiver() -> None:
@@ -31,10 +30,9 @@ async def receiver() -> None:
         # events = await poller.pll()
         req.send_string("111$$@@111")
         # if req in dict(eveonts):
-        
-        msg = await req.recv_string()
-        print('recvd', msg)
 
+        msg = await req.recv_string()
+        print("recvd", msg)
 
 
 async def receiver2() -> None:
@@ -48,14 +46,13 @@ async def receiver2() -> None:
         # events = await poller.pll()
         req.send_string("dasnd2222sjdsad")
         # if req in dict(eveonts):
-        
+
         msg = await req.recv_string()
-        print('recvd', msg)
+        print("recvd", msg)
 
 
 async def sender() -> None:
     """send a message every second"""
-    tic = time.time()
     rep = ctx.socket(zmq.REP)
     rep.bind(url)
     while True:
