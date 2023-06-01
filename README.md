@@ -78,7 +78,11 @@ python service.py
 
 ```shell
 cd frontend-service-manager/
+# Run on localhost
 python service.py
+
+# Connect to external host
+python3 service.py -a <host address> -p <port>
 ```
 
 3. API Server
