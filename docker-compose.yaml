@@ -2,6 +2,7 @@ version: "3.1"
 
 services:
   api:
+    restart: always
     ports:
       - 5001:5001
     environment:
@@ -12,6 +13,7 @@ services:
       context: ./api/
       dockerfile: Dockerfile
   service:
+    restart: always
     build:
       context: ./backend-service-manager
       dockerfile: Dockerfile

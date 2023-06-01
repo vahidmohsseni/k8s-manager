@@ -26,7 +26,13 @@ By decoupling this component from the _Service Manager_, we can scale out or in 
 
 # Docker images
 
-Build the API image
+For convenience, you can start the cloud containers with docker compose:
+
+```shell
+docker compose up --build -d
+```
+
+Build and run the API image
 
 ```shell
 cd api
@@ -35,7 +41,7 @@ docker run -p 5001:5001 --env HOST=0.0.0.0 -d k8s-manager-api
 
 ```
 
-Build the service manager image
+Build and run the service manager image
 
 ```shell
 cd backend-service-manager
