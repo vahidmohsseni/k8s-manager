@@ -9,7 +9,7 @@ from task import Task
 
 FORMAT = "%(asctime)s %(levelname)s %(message)s"
 logging.basicConfig(  # filename="backend-service.log",
-    format=FORMAT, level=logging.INFO
+    format=FORMAT, level=logging.DEBUG
 )
 
 
