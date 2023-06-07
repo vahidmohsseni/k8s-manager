@@ -206,7 +206,7 @@ def create_virtual_environment() -> None:
     Runs the init.sh to build the virtual environment
     """
     logging.info("creating virtual environment")
-    subprocess.run(["bash", "init.sh"])
+    subprocess.run(["sh", "init.sh"])
     logging.info("virtual environment created!")
 
 

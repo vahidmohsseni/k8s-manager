@@ -1,5 +1,5 @@
 #!/bin/sh
 
-rm -rf .tasks/venv
-mkdir -p .tasks/venv
-python -m venv .tasks/venv
+rm -rf .tasks
+mkdir -p .tasks
+python3 -m virtualenv .tasks/venv
