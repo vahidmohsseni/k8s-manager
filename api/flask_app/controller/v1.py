@@ -70,7 +70,8 @@ def send_request(req: dict):
                 _client.connect(os.environ.get("SOCKET_ADDRESS", "tcp://0.0.0.0:5555"))
                 _poll.register(_client, zmq.POLLIN)
                 _client.send_json(req)
-    return reply
+
+            return reply
 
 
 @bp.route("/version", methods=["GET"])
