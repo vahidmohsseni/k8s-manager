@@ -56,6 +56,7 @@ def send_request(req: dict):
                     retries_left = REQUEST_RETRIES
                     expect_reply = False
             else:
+                reply = {"Error": "No response from server"}
                 print("No response from server, retrying…")
                 _client.setsockopt(zmq.LINGER, 0)
                 _client.close()
