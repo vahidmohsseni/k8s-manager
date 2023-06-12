@@ -2,4 +2,4 @@
 
 rm -rf .tasks
 mkdir -p .tasks
-python3 -m virtualenv .tasks/venv
+python3 -m venv .tasks/venv
