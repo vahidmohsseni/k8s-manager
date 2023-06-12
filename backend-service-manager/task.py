@@ -1,7 +1,7 @@
 from threading import Lock
 
-class Task:
 
+class Task:
     def __init__(self, name, args_to_run, return_type) -> None:
         self.name = name
         self.args_to_run = args_to_run
@@ -25,6 +25,6 @@ class Task:
         self.status = status
         if return_value is not None:
             self.return_value = return_value
-            
+
     def set_assigned_node(self, node_name):
         self.assigned_to = node_name

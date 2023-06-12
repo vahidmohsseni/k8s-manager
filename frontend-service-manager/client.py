@@ -3,8 +3,7 @@ import json
 
 
 class Connection:
-
-    def __init__(self, address = "localhost", port = 5556) -> None:
+    def __init__(self, address="localhost", port=5556) -> None:
         self._address = address
         self._port = port
         self.reader: asyncio.StreamReader = None
@@ -13,7 +12,9 @@ class Connection:
         self.reconnect = False
 
     async def connect(self) -> None:
-        self.reader, self.writer = await asyncio.open_connection(self._address, self._port)
+        self.reader, self.writer = await asyncio.open_connection(
+            self._address, self._port
+        )
 
     @classmethod
     def serialize(cls, header: str, payload):
@@ -27,7 +28,7 @@ class Connection:
             header: "info"
             payload: {"cpu": "50%", "memory": "50%"}
             data = b'info\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1fjson{"cpu": "50%", "memory": "50%"}'
-        """
+        """  # ruff: noqa
         # reserve 20 byte for header
         data = header.encode()
         if len(data) > 16:
@@ -59,9 +60,9 @@ class Connection:
         # file type is not supported yet
         else:
             raise ValueError("payload type is not supported")
-            
+
         return data
-    
+
     @classmethod
     def deserialize(cls, data):
         """
@@ -94,31 +95,35 @@ class Connection:
         start_index = 0
         sep = 0
         while True:
-            payload_length = int.from_bytes(data[start_index + 16:start_index + 21], "big")
+            payload_length = int.from_bytes(
+                data[start_index + 16 : start_index + 21], "big"
+            )
             if payload_length == 0:
                 sep += 21
             else:
                 sep += 25 + payload_length
-            yield start_index, sep 
+            yield start_index, sep
             start_index = sep
             if sep + 1 > len(data):
                 break
- 
-    async def send(self, header, payload = None):
+
+    async def send(self, header, payload=None):
         # TODO: missing mechanism for data larger than 1024 bytes
         data = self.serialize(header, payload)
         await self._send(data)
-    
+
     async def recv(self):
         data = await self._recv()
-        for (start_index, sep) in self.seperator(data):
-            header, payload_length, payload_type, payload = self.deserialize(data[start_index:sep])
+        for start_index, sep in self.seperator(data):
+            header, payload_length, payload_type, payload = self.deserialize(
+                data[start_index:sep]
+            )
             yield header, payload_length, payload_type, payload
 
     async def _send(self, data):
         self.writer.write(data)
         await self.writer.drain()
-    
+
     async def _recv(self, n=1024):
         return await self.reader.read(n)
 

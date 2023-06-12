@@ -2,22 +2,24 @@ from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 import zmq
-import json
 
-ALLOWED_EXTENSIONS = set(['py', ])
+ALLOWED_EXTENSIONS = set(
+    [
+        "py",
+    ]
+)
 
 bp = Blueprint("v1", __name__, url_prefix="/api/v1")
 
 __context = zmq.Context.instance()
-_request:zmq.Socket = __context.socket(zmq.REQ)
-_request.connect("tcp://localhost:5555")
+_request: zmq.Socket = __context.socket(zmq.REQ)
+_request.connect(os.environ.get("SOCKET_ADDRESS", "tcp://0.0.0.0:5555"))
 
 REQUEST = {"cmd": None, "args": None}
 
 
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @bp.route("/version", methods=["GET"])
@@ -53,30 +55,31 @@ def create_task(task_name: str):
         return jsonify({"status": "command to run is not specified"}), 400
 
     command = request.form["cmd"]
-    
+
     if "rt" not in request.form:
         return jsonify({"status": "return type is not specified"}), 400
 
     return_type = request.form["rt"]
 
     file = request.files["file"]
-    if file.filename == '':
+    if file.filename == "":
         return jsonify({"status": "no file"}), 400
-    
+
     if task_name in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
         return jsonify({"status": "task already exists"}), 400
 
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         os.makedirs(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name))
-        file.save(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name, filename))
+        file.save(
+            os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name, filename)
+        )
         cmd = REQUEST.copy()
         cmd["cmd"] = "CREATE-TASK"
         cmd["args"] = [task_name, command, return_type]
         _request.send_json(cmd)
-        reply = _request.recv_json()
         return jsonify({"status": f"task: {task_name} created successfuly."}), 201
-    
+
     return jsonify({"status": "Error!"}), 400
 
 
@@ -88,7 +91,7 @@ def delete_task(task_name: str):
     # 4. delete the task folder
     if task_name not in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
         return jsonify({"status": "task does not exist"}), 404
-    
+
     cmd = REQUEST.copy()
     cmd["cmd"] = "DELETE-TASK"
     cmd["args"] = [task_name]
@@ -96,19 +99,24 @@ def delete_task(task_name: str):
     reply = _request.recv_json()
     print("from server", reply)
     os.remove(
-        os.path.join(current_app.config["UPLOAD_DIRECTORY"],
-                     task_name,
-                     os.listdir(os.path.join(current_app.config["UPLOAD_DIRECTORY"], 
-                                task_name)
-                               )[0]
-                    )
-            )
+        os.path.join(
+            current_app.config["UPLOAD_DIRECTORY"],
+            task_name,
+            os.listdir(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name))[
+                0
+            ],
+        )
+    )
     os.rmdir(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name))
-    return jsonify(
-        {
-            "status": f"task: {task_name} deleted successfuly from API host.", 
-            "backend-status": reply
-        }), 200
+    return (
+        jsonify(
+            {
+                "status": f"task: {task_name} deleted successfuly from API host.",
+                "backend-status": reply,
+            }
+        ),
+        200,
+    )
 
 
 @bp.route("/tasks/<string:task_name>", methods=["PUT"])
@@ -141,7 +149,7 @@ def stop_task(task_name: str):
     # 2. stop the task if it is running
     if task_name not in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
         return jsonify({"status": "task does not exist"}), 404
-    
+
     cmd = REQUEST.copy()
     cmd["cmd"] = "STOP-TASK"
     cmd["args"] = [task_name]
@@ -157,7 +165,7 @@ def task_status(task_name: str):
     # 2. get the task status
     if task_name not in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
         return jsonify({"status": "task does not exist"}), 404
-    
+
     cmd = REQUEST.copy()
     cmd["cmd"] = "TASK-STATUS"
     cmd["args"] = [task_name]
@@ -172,6 +180,7 @@ def task_results(task_name: str):
     # 1. check the task exists
     # 2. get the task results
     return jsonify({"task": task_name}), 200
+
 
 @bp.route("/tasks/<string:task_name>/download", methods=["GET"])
 def download_task(task_name: str):
