@@ -27,8 +27,9 @@ def download_task(task_name):
     task_dir = os.curdir + "/.tasks/" + task_name + "-" + str(int(time.time()))
     os.makedirs(task_dir, exist_ok=True)
 
+    # --content-disposition not available in busybox
     process = subprocess.run(
-        ["wget", "--content-disposition", url],
+        ["wget", "-O", f"{task_name}.py", url],
         capture_output=True,
         cwd=task_dir,
     )
