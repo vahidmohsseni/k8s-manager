@@ -28,15 +28,17 @@ def download_task(task_name):
     os.makedirs(task_dir, exist_ok=True)
 
     process = subprocess.run(
-        ["curl", url, "-JO", '-w "%{http_code}"'], capture_output=True, cwd=task_dir
+        ["wget", "--content-disposition", url],
+        capture_output=True,
+        cwd=task_dir,
     )
     if process.returncode != 0:
         logging.error(f"error downloading task: {task_name}", process.stderr)
         return 0
 
-    if "200" not in process.stdout.decode():
-        logging.error(f"task: {task_name} not found, return code:", process.stdout)
-        return 0
+    # if "200" not in process.stdout.decode():
+    #    logging.error(f"task: {task_name} not found, return code:", process.stdout)
+    #    return 0
 
     return 1
 
