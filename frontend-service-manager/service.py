@@ -1,6 +1,7 @@
 import asyncio
 import time
-import psutil
+
+# import psutil
 import logging
 import subprocess
 import os
@@ -37,9 +38,9 @@ def download_task(task_name):
         logging.error(f"error downloading task: {task_name}", process.stderr)
         return 0
 
-    if "200" not in process.stderr.decode():
-        logging.error(f"task: {task_name} not found, return code:", process.stderr)
-        return 0
+    # if "200" not in process.stderr.decode():
+    #    logging.error(f"task: {task_name} not found, return code:", process.stderr)
+    #    return 0
 
     return 1
 
@@ -145,8 +146,8 @@ async def send_info(socket: Connection) -> None:
     # sends info to server
     await asyncio.sleep(2)
     while True:
-        cpu_usage = psutil.cpu_percent()
-        memory_usage = psutil.virtual_memory().percent
+        cpu_usage = 100  # psutil.cpu_percent()
+        memory_usage = 100  # psutil.virtual_memory().percent
         await socket.send("info", {"cpu": cpu_usage, "memory": memory_usage})
         await asyncio.sleep(60)
 
