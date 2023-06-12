@@ -36,9 +36,9 @@ def download_task(task_name):
         logging.error(f"error downloading task: {task_name}", process.stderr)
         return 0
 
-    # if "200" not in process.stdout.decode():
-    #    logging.error(f"task: {task_name} not found, return code:", process.stdout)
-    #    return 0
+    if "200" not in process.stderr.decode():
+        logging.error(f"task: {task_name} not found, return code:", process.stderr)
+        return 0
 
     return 1
 
