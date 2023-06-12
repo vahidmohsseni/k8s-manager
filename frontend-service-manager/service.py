@@ -17,11 +17,11 @@ logging.basicConfig(  # filename="backend-service.log",
 PROCESS = None
 
 
-def download_task(task_name):
+def download_task(task_name: str, address: str):
     """
     Downloads the task from the server
     """
-    base_address = "http://localhost:5001/api/v1"
+    base_address = f"http://{address}:5001/api/v1"
     url = base_address + "/tasks/" + task_name + "/download"
 
     # create a directory to store the task tag it with the timestamp
@@ -45,12 +45,17 @@ def download_task(task_name):
     return 1
 
 
-async def run_task(socket: Connection, task_name, task_args, return_type) -> None:
+async def run_task(
+    socket: Connection,
+    task_name: str,
+    task_args,
+    return_type,
+) -> None:
     """
     Runs the task
     """
     global PROCESS
-    if not download_task(task_name):
+    if not download_task(task_name, socket._address):
         return
 
     logging.info(f"running task: {task_name}")
