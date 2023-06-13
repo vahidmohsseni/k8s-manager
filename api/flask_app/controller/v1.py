@@ -86,7 +86,7 @@ def get_tasks():
     req["cmd"] = "GET-TASKS"
     reply = send_request(req)
 
-    return jsonify({"tasks": reply["tasks"]}), 200
+    return jsonify(reply), 200
 
 
 @bp.route("/tasks/<string:task_name>", methods=["POST"])
