@@ -56,6 +56,7 @@ def send_request(req: dict):
                     retries_left = REQUEST_RETRIES
                     expect_reply = False
             else:
+                reply = {"Error": "No response from server"}
                 print("No response from server, retrying…")
                 _client.setsockopt(zmq.LINGER, 0)
                 _client.close()
@@ -85,7 +86,7 @@ def get_tasks():
     req["cmd"] = "GET-TASKS"
     reply = send_request(req)
 
-    return jsonify({"tasks": reply["tasks"]}), 200
+    return jsonify(reply), 200
 
 
 @bp.route("/tasks/<string:task_name>", methods=["POST"])

@@ -1,52 +1,63 @@
 import asyncio
 import time
-import psutil
 import logging
 import subprocess
 import os
+from sys import exit
 from argparse import ArgumentParser
 from client import Connection
-
+from urllib import request
 
 FORMAT = "%(asctime)s %(levelname)s %(message)s"
-logging.basicConfig(  # filename="backend-service.log",
-    format=FORMAT, level=logging.DEBUG
+logging.basicConfig(
+    # filename="backend-service.log",
+    format=FORMAT,
+    level=logging.DEBUG,
 )
 
 PROCESS = None
 
 
-def download_task(task_name):
+def download_task(task_name: str, address: str):
     """
     Downloads the task from the server
     """
-    base_address = "http://localhost:5001/api/v1"
+    base_address = f"http://{address}:5001/api/v1"
     url = base_address + "/tasks/" + task_name + "/download"
 
     # create a directory to store the task tag it with the timestamp
     task_dir = os.curdir + "/.tasks/" + task_name + "-" + str(int(time.time()))
     os.makedirs(task_dir, exist_ok=True)
 
-    process = subprocess.run(
-        ["curl", url, "-JO", '-w "%{http_code}"'], capture_output=True, cwd=task_dir
-    )
-    if process.returncode != 0:
-        logging.error(f"error downloading task: {task_name}", process.stderr)
+    response = request.urlopen(url)
+
+    if response.status != 200:
+        logging.error(
+            "error downloading task:", task_name, "status code:", response.status_code
+        )
         return 0
 
-    if "200" not in process.stdout.decode():
-        logging.error(f"task: {task_name} not found, return code:", process.stdout)
+    filename = response.headers["Content-Disposition"].split("filename=")[1]
+    if not filename:
+        logging.error("Error: no content disposition available")
         return 0
+
+    open(task_dir + "/" + filename, "wb").write(response.read())
 
     return 1
 
 
-async def run_task(socket: Connection, task_name, task_args, return_type) -> None:
+async def run_task(
+    socket: Connection,
+    task_name: str,
+    task_args,
+    return_type,
+) -> None:
     """
     Runs the task
     """
     global PROCESS
-    if not download_task(task_name):
+    if not download_task(task_name, socket._address):
         return
 
     logging.info(f"running task: {task_name}")
@@ -142,8 +153,8 @@ async def send_info(socket: Connection) -> None:
     # sends info to server
     await asyncio.sleep(2)
     while True:
-        cpu_usage = psutil.cpu_percent()
-        memory_usage = psutil.virtual_memory().percent
+        cpu_usage = 100  # psutil.cpu_percent()
+        memory_usage = 100  # psutil.virtual_memory().percent
         await socket.send("info", {"cpu": cpu_usage, "memory": memory_usage})
         await asyncio.sleep(60)
 
@@ -213,15 +224,23 @@ def create_virtual_environment() -> None:
 if __name__ == "__main__":
     parser = create_parser()
     args = parser.parse_args()
-    create_virtual_environment()
-
-    socket = Connection()
-    if args.host:
-        socket._address = args.host
-    if args.port and int(args.port):
-        socket._port = int(args.port)
-    asyncio.run(
-        asyncio.wait(
-            [socket.connect(), heartbeat(socket), handler(socket), send_info(socket)]
+    try:
+        create_virtual_environment()
+        socket = Connection()
+        if args.host:
+            socket._address = args.host
+        if args.port and int(args.port):
+            socket._port = int(args.port)
+        asyncio.run(
+            asyncio.wait(
+                [
+                    socket.connect(),
+                    heartbeat(socket),
+                    handler(socket),
+                    send_info(socket),
+                ]
+            )
         )
-    )
+    except KeyboardInterrupt:
+        print("\nExiting...")
+        exit(0)
