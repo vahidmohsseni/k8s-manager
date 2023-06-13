@@ -8,7 +8,7 @@ import os
 from sys import exit
 from argparse import ArgumentParser
 from client import Connection
-
+import requests
 
 FORMAT = "%(asctime)s %(levelname)s %(message)s"
 logging.basicConfig(  # filename="backend-service.log",
@@ -29,19 +29,20 @@ def download_task(task_name: str, address: str):
     task_dir = os.curdir + "/.tasks/" + task_name + "-" + str(int(time.time()))
     os.makedirs(task_dir, exist_ok=True)
 
-    # --content-disposition not available in busybox
-    process = subprocess.run(
-        ["wget", "-O", f"{task_name}.py", url],
-        capture_output=True,
-        cwd=task_dir,
-    )
-    if process.returncode != 0:
-        logging.error(f"error downloading task: {task_name}", process.stderr)
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        logging.error(
+            "error downloading task:", task_name, "status code:", response.status_code
+        )
         return 0
 
-    # if "200" not in process.stderr.decode():
-    #    logging.error(f"task: {task_name} not found, return code:", process.stderr)
-    #    return 0
+    filename = response.headers["Content-Disposition"].split("filename=")[1]
+    if not filename or not response.content:
+        logging.error("Error: corrupt file")
+        return 0
+
+    open(task_dir + "/" + filename, "wb").write(response.content)
 
     return 1
 
