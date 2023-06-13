@@ -6,7 +6,7 @@ import os
 from sys import exit
 from argparse import ArgumentParser
 from client import Connection
-import requests
+from urllib import request
 
 FORMAT = "%(asctime)s %(levelname)s %(message)s"
 logging.basicConfig(  # filename="backend-service.log",
@@ -27,20 +27,21 @@ def download_task(task_name: str, address: str):
     task_dir = os.curdir + "/.tasks/" + task_name + "-" + str(int(time.time()))
     os.makedirs(task_dir, exist_ok=True)
 
-    response = requests.get(url)
+    response = request.urlopen(url)
+    print(response.headers)
 
-    if response.status_code != 200:
+    if response.status != 200:
         logging.error(
             "error downloading task:", task_name, "status code:", response.status_code
         )
         return 0
 
     filename = response.headers["Content-Disposition"].split("filename=")[1]
-    if not filename or not response.content:
-        logging.error("Error: corrupt file")
+    if not filename:
+        logging.error("Error: no content disposition available")
         return 0
 
-    open(task_dir + "/" + filename, "wb").write(response.content)
+    open(task_dir + "/" + filename, "wb").write(response.read())
 
     return 1
 
