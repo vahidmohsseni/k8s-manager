@@ -9,8 +9,10 @@ from client import Connection
 from urllib import request
 
 FORMAT = "%(asctime)s %(levelname)s %(message)s"
-logging.basicConfig(  # filename="backend-service.log",
-    format=FORMAT, level=logging.DEBUG
+logging.basicConfig(
+    # filename="backend-service.log",
+    format=FORMAT,
+    level=logging.DEBUG,
 )
 
 PROCESS = None
@@ -28,7 +30,6 @@ def download_task(task_name: str, address: str):
     os.makedirs(task_dir, exist_ok=True)
 
     response = request.urlopen(url)
-    print(response.headers)
 
     if response.status != 200:
         logging.error(
