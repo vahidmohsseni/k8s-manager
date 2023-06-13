@@ -1,7 +1,5 @@
 import asyncio
 import time
-
-# import psutil
 import logging
 import subprocess
 import os
