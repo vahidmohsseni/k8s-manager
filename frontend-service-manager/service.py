@@ -5,6 +5,7 @@ import time
 import logging
 import subprocess
 import os
+from sys import exit
 from argparse import ArgumentParser
 from client import Connection
 
@@ -222,15 +223,23 @@ def create_virtual_environment() -> None:
 if __name__ == "__main__":
     parser = create_parser()
     args = parser.parse_args()
-    create_virtual_environment()
-
-    socket = Connection()
-    if args.host:
-        socket._address = args.host
-    if args.port and int(args.port):
-        socket._port = int(args.port)
-    asyncio.run(
-        asyncio.wait(
-            [socket.connect(), heartbeat(socket), handler(socket), send_info(socket)]
+    try:
+        create_virtual_environment()
+        socket = Connection()
+        if args.host:
+            socket._address = args.host
+        if args.port and int(args.port):
+            socket._port = int(args.port)
+        asyncio.run(
+            asyncio.wait(
+                [
+                    socket.connect(),
+                    heartbeat(socket),
+                    handler(socket),
+                    send_info(socket),
+                ]
+            )
         )
-    )
+    except KeyboardInterrupt:
+        print("\nExiting...")
+        exit(0)
