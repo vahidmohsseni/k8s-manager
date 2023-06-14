@@ -2,11 +2,11 @@ FROM python:3.8.13-alpine
 
 WORKDIR /api
 
-COPY requirement.txt .
+COPY . .
 
-RUN pip install -t requirement.txt
+RUN pip install -r requirements.txt
 
-COPY app.py .
+EXPOSE 5001
 
-
-
+ENTRYPOINT ["python3"]
+CMD ["app.py"]

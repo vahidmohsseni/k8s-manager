@@ -8,17 +8,22 @@ from task import Task
 
 
 class Server:
-    
-    def __init__(self) -> None:
-        self._address = "0.0.0.0"
-        self._port = 5556
+    def __init__(
+        self,
+        host: str = "0.0.0.0",
+        port: int = 5556,
+    ) -> None:
+        self._address = host
+        self._port = port
         self.connections: List[Connection] = []
         self.counter = 1
         self.tasks_list: List[Task] = []
 
     async def run(self) -> None:
-        socket = await asyncio.start_server(self.handle_connection, self._address, self._port)
-        async with socket: 
+        socket = await asyncio.start_server(
+            self.handle_connection, self._address, self._port
+        )
+        async with socket:
             await socket.serve_forever()
 
     async def handle_connection(self, reader, writer):
@@ -49,7 +54,7 @@ class Server:
             if connection.status == "ready":
                 return i
         return -1
-        
+
     async def schedule_task(self, task: Task):
         """
         schedule a task to a node
@@ -57,7 +62,7 @@ class Server:
         # find the first ready node
         index = self._find_ready_node()
         if index == -1:
-            return 
+            return
         # send the task to the node
         conn: Connection = self.connections[index]
         await conn.set_task(task)
@@ -78,7 +83,7 @@ class Server:
                         await connection.stop_task()
                         return {"status": "ok"}
         return {"status": "error", "message": "task not found"}
-    
+
     async def delete_task(self, task_name):
         await self.stop_task(task_name)
         for task in self.tasks_list:
@@ -86,12 +91,16 @@ class Server:
                 self.tasks_list.remove(task)
                 return {"status": "ok"}
         return {"status": "error", "message": "task not found"}
-    
+
     async def start_task(self, task_name):
         for task in self.tasks_list:
             if task.name == task_name:
                 if task.status != "stopped":
-                    return {"status": "error", "message": f"you can only start a stopped task, current status is {task.status}"}
+                    message = (
+                        "you can only start a stopped task, "
+                        f"current status is {task.status}"
+                    )
+                    return {"status": "error", "message": message}
                 await self.schedule_task(task)
                 return {"status": "ok"}
         return {"status": "error", "message": "task not found"}
