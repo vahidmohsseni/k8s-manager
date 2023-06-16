@@ -15,6 +15,13 @@ from werkzeug.exceptions import (
     BadRequest as BadRequestError,
     NotImplemented as NotImplementedError,
 )
+
+# For some reason you can't import from api/ need to be flask_app/ as root
+from flask_app.handlers.http_errors import (
+    bad_request,
+    internal_server_error,
+    not_implemented,
+)
 from flask_app.services.service import (
     REQUEST,
     ALLOWED_EXTENSIONS,
@@ -26,21 +33,9 @@ from flask_app.services.service import (
 
 blueprint = Blueprint("v1", __name__, url_prefix="/api/v1")
 
-
-# TODO: figure how to get the error handlers into a new file
-@blueprint.errorhandler(BadRequestError)
-def bad_request(e):
-    return jsonify(error=str(e)), 400
-
-
-@blueprint.errorhandler(InternalServerError)
-def internal_server_error(e):
-    return jsonify(error=str(e)), 500
-
-
-@blueprint.errorhandler(NotImplementedError)
-def not_implemented(e):
-    return jsonify(error=str(e)), 500
+blueprint.register_error_handler(BadRequestError, bad_request)
+blueprint.register_error_handler(NotImplementedError, not_implemented)
+blueprint.register_error_handler(InternalServerError, internal_server_error)
 
 
 @blueprint.route("/version", methods=["GET"])
