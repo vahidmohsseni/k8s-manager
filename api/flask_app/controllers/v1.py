@@ -1,7 +1,7 @@
 """
 This file contains only the blueprint which defines the API routes.
 It is recommended that most of the logic that the routes use is 
-to be defined in services/ to keep the codebase simple as possible.
+to be defined in services/ to keep the codebase as simple as possible.
 This also leaves more space for middleware of the routes if something
 like that is required in the future. If the routes start to clutter 
 this file they should be moved and organized inside related folders.
@@ -9,6 +9,7 @@ this file they should be moved and organized inside related folders.
 
 from flask import Blueprint, jsonify, current_app, send_from_directory
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import BadRequest, InternalServerError
 import os
 
 from flask_app.services.service import (
@@ -20,6 +21,16 @@ from flask_app.services.service import (
 
 
 blueprint = Blueprint("v1", __name__, url_prefix="/api/v1")
+
+
+@blueprint.errorhandler(BadRequest)
+def bad_request(e):
+    return jsonify(error=str(e)), 400
+
+
+@blueprint.errorhandler(InternalServerError)
+def internal_server_error(e):
+    return jsonify(error=str(e)), 500
 
 
 @blueprint.route("/version", methods=["GET"])
@@ -45,15 +56,11 @@ def create_task(task_name: str):
     """
     # TODO: add example when returning error
 
-    try:
-        file, command, return_type = check_create_request()
-    except Exception:
-        error = check_create_request()
-        return error
+    file, command, return_type = check_create_request()
 
     # TODO: move upload directory to server side.
     if task_name in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
-        return jsonify({"status": "task already exists"}), 400
+        raise BadRequest("task already exists")
 
     if file and check_filename(file.filename):
         filename = secure_filename(file.filename)
@@ -71,7 +78,7 @@ def create_task(task_name: str):
         return jsonify({"status": f"task: {task_name} created successfuly."}), 201
 
     else:
-        return jsonify({"status": "Error!"}), 500
+        raise InternalServerError()
 
 
 @blueprint.route("/tasks/<string:task_name>", methods=["DELETE"])
