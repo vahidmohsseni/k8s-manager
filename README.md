@@ -60,7 +60,14 @@ cd manager
 python service.py
 ```
 
-2. Runners
+2. API Server
+
+```shell
+cd api
+python app.py
+```
+
+3. Runners
    - It is possible to run multiple instances of this service on a same machine
 
 ```shell
@@ -70,11 +77,4 @@ python service.py
 
 # Connect to external host
 python3 service.py -a <host address> -p <port>
-```
-
-3. API Server
-
-```shell
-cd api
-python app.py
 ```
