@@ -2,7 +2,7 @@
 
 This software is consist of three main components based on the architecture that is illustrated below.
 
-![System Design](/design.png)
+![System Design](/.github/images/design.png)
 
 ## Service Manager
 
