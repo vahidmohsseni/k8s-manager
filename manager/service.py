@@ -26,7 +26,7 @@ def create_task(args):
     """args order: task_name, task_args, task_return_type"""
     task = Task(args[0], args[1], args[2])
     server.tasks_list.append(task)
-    return {"status": "ok"}
+    return {{"status": f"task: {task.name} created successfuly."}}
 
 
 async def stop_task(args):
