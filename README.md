@@ -44,7 +44,7 @@ docker run -p 5001:5001 --env HOST=0.0.0.0 -d k8s-manager-api
 Build and run the service manager image
 
 ```shell
-cd backend-service-manager
+cd manager
 docker build -f Dockerfile -t k8s-manager-service .
 docker run -d k8s-manager-service
 ```
@@ -69,7 +69,7 @@ To run this system, follow the following instructions in order.
 1. Service Manager
 
 ```shell
-cd backend-service-manager/
+cd manager
 python service.py
 ```
 
@@ -77,7 +77,7 @@ python service.py
    - It is possible to run multiple instances of this service on a same machine
 
 ```shell
-cd frontend-service-manager/
+cd worker
 # Run on localhost
 python service.py
 
@@ -88,6 +88,6 @@ python3 service.py -a <host address> -p <port>
 3. API Server
 
 ```shell
-cd api/
+cd api
 python app.py
 ```
