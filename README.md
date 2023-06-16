@@ -49,20 +49,7 @@ docker build -f Dockerfile -t k8s-manager-service .
 docker run -d k8s-manager-service
 ```
 
-## Deployment
-
-It is possible to deploy the components manually or in a Kubernetes cluster.
-
-```shell
-git pull https://github.com/vahidmohsseni/k8s-manager.git
-cd k8s-manager/
-```
-
-### Kubernetes
-
-TBD
-
-### Manual
+### Manual deployment
 
 To run this system, follow the following instructions in order.
 
