@@ -19,7 +19,7 @@ docker build -f Dockerfile -t k8s-manager-api .
 and run the image with
 
 ```shell
-docker run --env HOST=<0.0.0.0 or localhost> --env PORT=<port number> --env SOCKET_ADDRESS=<Service Manager address> k8s-manager-api
+docker run -p <port mapping> --env HOST=<0.0.0.0 or localhost> --env PORT=<port number> --env SOCKET_ADDRESS=<Service Manager address> k8s-manager-api
 ```
 
 ### Python standalone
