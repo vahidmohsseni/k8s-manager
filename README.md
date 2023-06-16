@@ -32,6 +32,8 @@ For convenience, you can start the cloud containers with docker compose:
 docker compose up --build -d
 ```
 
+## Building individual containers
+
 Build and run the API image
 
 ```shell
