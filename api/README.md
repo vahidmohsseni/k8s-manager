@@ -48,7 +48,3 @@ export SOCKET_ADDRESS=<...>
 | Stop a task            | [/api/v1/tasks/<task_name>/stop](#)   | `-X POST`                                                                                            |
 | Start a stopped task   | [/api/v1/tasks/<task_name>/start](#)  | `-X POST`                                                                                            |
 | Check Status of a task | [/api/v1/tasks/<task_name>/status](#) | `-X GET`                                                                                             |
-
-```
-
-```
