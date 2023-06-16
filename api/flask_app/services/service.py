@@ -1,4 +1,4 @@
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, InternalServerError
 from flask import request
 import zmq
 import os
@@ -55,7 +55,6 @@ def send_request(req: dict):
                     retries_left = REQUEST_RETRIES
                     expect_reply = False
             else:
-                reply = {"Error": "No response from server"}
                 print("No response from server, retrying…")
                 _client.setsockopt(zmq.LINGER, 0)
                 _client.close()
@@ -63,7 +62,7 @@ def send_request(req: dict):
                 retries_left -= 1
                 if retries_left == 0:
                     print("Server seems to be offline, abandoning")
-                    break
+                    raise InternalServerError(description="No response from server")
                 print("Reconnecting and resending request")
                 # Create new connection
                 _client: zmq.Socket = __context.socket(zmq.REQ)

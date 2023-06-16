@@ -9,11 +9,15 @@ this file they should be moved and organized inside related folders.
 
 from flask import Blueprint, jsonify, current_app, send_from_directory
 from werkzeug.utils import secure_filename
-from werkzeug.exceptions import BadRequest, InternalServerError
 import os
-
+from werkzeug.exceptions import (
+    InternalServerError,
+    BadRequest as BadRequestError,
+    NotImplemented as NotImplementedError,
+)
 from flask_app.services.service import (
     REQUEST,
+    ALLOWED_EXTENSIONS,
     check_create_request,
     check_filename,
     send_request,
@@ -23,13 +27,19 @@ from flask_app.services.service import (
 blueprint = Blueprint("v1", __name__, url_prefix="/api/v1")
 
 
-@blueprint.errorhandler(BadRequest)
+# TODO: figure how to get the error handlers into a new file
+@blueprint.errorhandler(BadRequestError)
 def bad_request(e):
     return jsonify(error=str(e)), 400
 
 
 @blueprint.errorhandler(InternalServerError)
 def internal_server_error(e):
+    return jsonify(error=str(e)), 500
+
+
+@blueprint.errorhandler(NotImplementedError)
+def not_implemented(e):
     return jsonify(error=str(e)), 500
 
 
@@ -58,27 +68,28 @@ def create_task(task_name: str):
 
     file, command, return_type = check_create_request()
 
-    # TODO: move upload directory to server side.
-    if task_name in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
-        raise BadRequest("task already exists")
+    if not file:
+        raise InternalServerError("file not found")
 
-    if file and check_filename(file.filename):
+    # This check introduces an bug which will be fixed in future developments.
+    if task_name in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
+        raise BadRequestError("task already exists")
+
+    if check_filename(file.filename):
         filename = secure_filename(file.filename)
         os.makedirs(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name))
         file.save(
             os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name, filename)
         )
-
-        req = REQUEST.copy()
-        req["cmd"] = "CREATE-TASK"
-        req["args"] = [task_name, command, return_type]
-        send_request(req)
-
-        # TODO: This should come as a reply from the server
-        return jsonify({"status": f"task: {task_name} created successfuly."}), 201
-
     else:
-        raise InternalServerError()
+        raise NotImplementedError("allowed file extensions: " + str(ALLOWED_EXTENSIONS))
+
+    req = REQUEST.copy()
+    req["cmd"] = "CREATE-TASK"
+    req["args"] = [task_name, command, return_type]
+    reply = send_request(req)
+
+    return jsonify(reply), 201
 
 
 @blueprint.route("/tasks/<string:task_name>", methods=["DELETE"])
