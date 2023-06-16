@@ -15,7 +15,7 @@ services:
   service:
     restart: always
     build:
-      context: ./backend-service-manager
+      context: ./manager
       dockerfile: Dockerfile
     ports:
       - 5555:5555
