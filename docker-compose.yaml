@@ -20,3 +20,13 @@ services:
     ports:
       - 5555:5555
       - 5556:5556
+  trainer:
+    restart: always
+    ports:
+      - 5002:5002
+    environment:
+      HOST: "0.0.0.0"
+      PORT: 5002
+    build:
+      context: ./trainer
+      dockerfile: Dockerfile
