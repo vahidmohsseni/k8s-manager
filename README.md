@@ -32,6 +32,8 @@ For convenience, you can start the cloud containers with docker compose:
 docker compose up --build -d
 ```
 
+## Building individual containers
+
 Build and run the API image
 
 ```shell
@@ -44,50 +46,37 @@ docker run -p 5001:5001 --env HOST=0.0.0.0 -d k8s-manager-api
 Build and run the service manager image
 
 ```shell
-cd backend-service-manager
+cd manager
 docker build -f Dockerfile -t k8s-manager-service .
 docker run -d k8s-manager-service
 ```
 
-## Deployment
-
-It is possible to deploy the components manually or in a Kubernetes cluster.
-
-```shell
-git pull https://github.com/vahidmohsseni/k8s-manager.git
-cd k8s-manager/
-```
-
-### Kubernetes
-
-TBD
-
-### Manual
+### Manual deployment
 
 To run this system, follow the following instructions in order.
 
 1. Service Manager
 
 ```shell
-cd backend-service-manager/
+cd manager
 python service.py
 ```
 
-2. Runners
+2. API Server
+
+```shell
+cd api
+python app.py
+```
+
+3. Runners
    - It is possible to run multiple instances of this service on a same machine
 
 ```shell
-cd frontend-service-manager/
+cd worker
 # Run on localhost
 python service.py
 
 # Connect to external host
 python3 service.py -a <host address> -p <port>
-```
-
-3. API Server
-
-```shell
-cd api/
-python app.py
 ```
