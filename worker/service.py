@@ -1,12 +1,12 @@
 import asyncio
 import time
 import logging
-import subprocess
 import os
 from sys import exit
 from argparse import ArgumentParser
 from client import Connection
 from urllib import request
+import venv
 
 FORMAT = "%(asctime)s %(levelname)s %(message)s"
 logging.basicConfig(
@@ -216,9 +216,14 @@ def create_virtual_environment() -> None:
     """
     Runs the init.sh to build the virtual environment
     """
-    logging.info("creating virtual environment")
-    subprocess.run(["sh", "init.sh"])
-    logging.info("virtual environment created!")
+    try:
+        logging.info("creating virtual environment")
+        os.makedirs(".tasks", exist_ok=True)
+        venv.create(".tasks/venv")
+        logging.info("virtual environment created!")
+    except Exception as e:
+        logging.error(e)
+        exit(1)
 
 
 if __name__ == "__main__":
