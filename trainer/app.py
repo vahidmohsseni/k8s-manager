@@ -1,8 +1,10 @@
 import os
+from utils import logger
 from flask import Flask
-
+from waitress import serve
 from routes import routes
 
+ENV = os.environ.get("ENV")
 
 app = Flask(__name__)
 
@@ -16,8 +18,11 @@ if __name__ == "__main__":
     if not (PORT):
         raise Exception("No port defined")
 
+    logger.info(f"Creating upload directory in {UPLOAD_DIR}")
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-
     app.register_blueprint(routes)
-    print(app.url_map)
-    app.run(host=HOST, port=PORT)
+    if ENV == "prod":
+        logger.info("Serving in production mode")
+        serve(app, host=HOST, port=PORT)
+    else:
+        app.run(host=HOST, port=PORT)

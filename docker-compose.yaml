@@ -27,6 +27,7 @@ services:
     environment:
       HOST: "0.0.0.0"
       PORT: 5002
+      ENV: prod
     build:
       context: ./trainer
       dockerfile: Dockerfile
