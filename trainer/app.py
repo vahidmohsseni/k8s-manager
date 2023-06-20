@@ -20,6 +20,7 @@ if __name__ == "__main__":
 
     logger.info(f"Creating upload directory in {UPLOAD_DIR}")
     os.makedirs(UPLOAD_DIR, exist_ok=True)
+    app.config["UPLOAD_FOLDER"] = UPLOAD_DIR
     app.register_blueprint(routes)
     if ENV == "prod":
         logger.info("Serving in production mode")

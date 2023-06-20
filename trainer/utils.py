@@ -1,6 +1,7 @@
 import os
 import logging
 from pathlib import Path
+from datetime import datetime
 
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", ".uploads")
 
@@ -12,7 +13,7 @@ logger = logging.getLogger("waitress")
 logger.setLevel(logging.INFO if os.environ.get("ENV") == "prod" else logging.DEBUG)
 
 
-def file_exists(filename):
+def file_exists(filename: str):
     """Check if file exists"""
     try:
         for file in Path(UPLOAD_DIR).glob("*"):
@@ -24,6 +25,15 @@ def file_exists(filename):
 
 def get_filenames() -> list[str]:
     try:
-        return [file.name for file in Path(UPLOAD_DIR).glob("*")]
+        return [
+            {
+                "id": file.name.split(".")[0],
+                "modified_at": datetime.fromtimestamp(file.stat().st_mtime),
+                "created_at": datetime.fromtimestamp(file.stat().st_ctime),
+                "size_in_bytes": file.stat().st_size,
+                "extension": file.suffix,
+            }
+            for file in Path(UPLOAD_DIR).glob("*")
+        ]
     except Exception:
         return []
