@@ -22,7 +22,7 @@ def enqueue_model(model_id: str):
 
 
 def model_in_training(model_id: str):
-    return model_id + TRAINED_MODEL_SUFFIX in QUEUE
+    return any([model + TRAINED_MODEL_SUFFIX == model_id for model in QUEUE])
 
 
 def train_model(model_id: str):

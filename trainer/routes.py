@@ -49,7 +49,8 @@ def get_model(model_id):
     if model:
         return send_from_directory(UPLOAD_DIR, model.name)
     if model_in_training(model_id):
-        return Response(status=202, message="Model is being trained, check back later.")
+        return {"message": "Model is being trained, check back later."}, 202
+
     return Response(status=404)
 
 
