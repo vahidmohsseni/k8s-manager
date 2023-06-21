@@ -2,9 +2,11 @@ import json
 from flask import Blueprint, Response, send_from_directory, request, abort
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import HTTPException
-from utils import file_exists, get_filenames, UPLOAD_DIR
-from os import path
+from utils import get_model_path, get_filenames, UPLOAD_DIR
+from pathlib import Path
+from training import enqueue_model, model_in_training
 from uuid import uuid4
+
 
 routes = Blueprint("routes", __name__)
 
@@ -35,15 +37,19 @@ def post_model():
             abort(400, "File has no extension")
         extension = file.filename.rsplit(".", 1)[1]
         id = secure_filename(str(uuid4().hex))
-        file_path = path.join(UPLOAD_DIR, id + "." + extension)
+        file_path = Path(UPLOAD_DIR, id + "." + extension)
         file.save(file_path)
+        enqueue_model(id)
         return {"id": id}
 
 
 @routes.get("/models/<string:model_id>")
 def get_model(model_id):
-    if file_exists(model_id):
-        return send_from_directory(UPLOAD_DIR, model_id)
+    model = get_model_path(model_id)
+    if model:
+        return send_from_directory(UPLOAD_DIR, model.name)
+    if model_in_training(model_id):
+        return Response(status=202, message="Model is being trained, check back later.")
     return Response(status=404)
 
 

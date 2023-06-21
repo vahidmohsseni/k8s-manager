@@ -13,14 +13,12 @@ logger = logging.getLogger("waitress")
 logger.setLevel(logging.INFO if os.environ.get("ENV") == "prod" else logging.DEBUG)
 
 
-def file_exists(filename: str):
+def get_model_path(model_id: str) -> Path:
     """Check if file exists"""
-    try:
-        for file in Path(UPLOAD_DIR).glob("*"):
-            if file.name == filename:
-                return True
-    except FileNotFoundError:
-        return False
+    for file in Path(UPLOAD_DIR).glob("*"):
+        name = file.name.split(".")[0]
+        if name == model_id:
+            return file
 
 
 def get_filenames() -> list[str]:
