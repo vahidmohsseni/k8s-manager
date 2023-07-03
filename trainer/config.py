@@ -1,1 +1,0 @@
-TRAINED_MODEL_SUFFIX = "-trained"
